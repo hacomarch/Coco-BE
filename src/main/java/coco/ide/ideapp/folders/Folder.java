@@ -41,13 +41,6 @@ public class Folder {
         this.name = name;
     }
 
-    public void changeProject(Project project) {
-        if (project != null) {
-            this.project = project;
-            project.getFolders().add(this);
-        }
-    }
-
     public void changeParentFolder(Folder parentFolder) {
         if (this.parentFolder != null) {
             this.parentFolder.getChildFolders().remove(this);

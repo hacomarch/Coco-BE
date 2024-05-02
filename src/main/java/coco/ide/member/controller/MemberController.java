@@ -1,7 +1,7 @@
 package coco.ide.member.controller;
 
 import coco.ide.member.domain.Member;
-import coco.ide.member.repository.MemberRepository;
+import coco.ide.member.service.MemberService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,11 +12,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class MemberController {
 
     @Autowired
-    MemberRepository memberRepository;
+    MemberService memberService;
 
     @PostMapping("/register")
     public String register(Member member) {
-        memberRepository.save(member);
+        memberService.saveMember(member);
         return ""; //수정
     }
 }

@@ -40,8 +40,7 @@ public class ProjectService {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new RuntimeException("project dose not exist"));
 
-        //setter 말고 다른 방법 필요
-        project.setName(newName);
+        project.changeName(newName);
         return new ProjectDto(project.getProjectId(), project.getName(), project.getLanguage());
     }
 

@@ -42,8 +42,12 @@ public class Project {
         this.folders = new ArrayList<>();
     }
 
-    //setter 말고 다른 방법 필요
-    public void setName(String name) {
-        this.name = name;
+    public void changeName(String newName) {
+        if (newName == null || newName.trim().isEmpty()) {
+            throw new IllegalArgumentException("Project name cannot be empty.");
+        }
+        if (!this.name.equals(newName)) {
+            this.name = newName;
+        }
     }
 }

@@ -14,6 +14,7 @@ import java.util.List;
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
+
 public class Project {
     @Id @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "project_id")
@@ -33,6 +34,7 @@ public class Project {
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL)
     private List<Folder> folders = new ArrayList<>();
 
+
     @Builder
     public Project(String name, String language) {
         this.name = name;
@@ -40,4 +42,8 @@ public class Project {
         this.folders = new ArrayList<>();
     }
 
+    //setter 말고 다른 방법 필요
+    public void setName(String name) {
+        this.name = name;
+    }
 }

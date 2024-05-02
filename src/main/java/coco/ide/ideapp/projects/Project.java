@@ -4,6 +4,7 @@ import coco.ide.ideapp.folders.Folder;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -32,7 +33,11 @@ public class Project {
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL)
     private List<Folder> folders = new ArrayList<>();
 
-    public void changeName(String name) {
+    @Builder
+    public Project(String name, String language) {
         this.name = name;
+        this.language = language;
+        this.folders = new ArrayList<>();
     }
+
 }

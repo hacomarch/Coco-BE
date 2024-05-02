@@ -44,7 +44,7 @@ public class Project {
 
     public void changeName(String newName) {
         if (newName == null || newName.trim().isEmpty()) {
-            throw new IllegalArgumentException("Project name cannot be empty.");
+            throw new IllegalArgumentException("프로젝트 명은 빈 칸일 수 없습니다.");
         }
         if (!this.name.equals(newName)) {
             this.name = newName;

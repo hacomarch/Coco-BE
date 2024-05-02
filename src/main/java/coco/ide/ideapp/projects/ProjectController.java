@@ -1,6 +1,7 @@
 package coco.ide.ideapp.projects;
 
 import coco.ide.ideapp.projects.requestdto.CreateProjectForm;
+import coco.ide.ideapp.projects.requestdto.UpdateProjectNameForm;
 import coco.ide.ideapp.projects.responseDto.ProjectDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,4 +34,10 @@ public class ProjectController {
         return "delete project ok";
     }
 
+    @PatchMapping("/{projectId}")
+    public ResponseEntity<ProjectDto> updateProjectName(@PathVariable("projectId") Long projectId, @RequestBody UpdateProjectNameForm form) {
+        ProjectDto project = projectService.updateProjectName(projectId, form.getNewName());
+
+        return ResponseEntity.ok(project);
+    }
 }

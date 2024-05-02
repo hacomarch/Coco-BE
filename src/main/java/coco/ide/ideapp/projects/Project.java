@@ -14,7 +14,6 @@ import java.util.List;
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-
 public class Project {
     @Id @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "project_id")

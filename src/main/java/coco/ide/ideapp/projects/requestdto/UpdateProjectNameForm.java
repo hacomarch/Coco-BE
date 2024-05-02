@@ -9,6 +9,5 @@ import lombok.Data;
 @Builder
 @AllArgsConstructor
 public class UpdateProjectNameForm {
-    @JsonProperty("newName")
-    private final String  newName = null;
+    private final String newName = null;
 }

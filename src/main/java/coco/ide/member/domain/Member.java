@@ -1,7 +1,11 @@
 package coco.ide.member.domain;
 
+import coco.ide.ideapp.projects.Project;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @AllArgsConstructor
@@ -21,10 +25,11 @@ public class Member {
     @Column(name = "nickname", nullable = false)
     private String nickname;
 
-
     @Column(name = "password")
     private String password;
 
+    @OneToMany(mappedBy = "member")
+    private List<Project> projects = new ArrayList<>();
 
     public Member(String email, String nickname, String password) {
         this.email = email;

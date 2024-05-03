@@ -1,4 +1,4 @@
-package coco.ide.ideapp.projects.responseDto;
+package coco.ide.ideapp.projects.responsedto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

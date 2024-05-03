@@ -2,9 +2,9 @@ package coco.ide.ideapp.projects;
 
 import coco.ide.ideapp.projects.requestdto.CreateProjectForm;
 import coco.ide.ideapp.projects.requestdto.UpdateProjectNameForm;
-import coco.ide.ideapp.projects.responseDto.FolderListDto;
-import coco.ide.ideapp.projects.responseDto.ProjectDto;
-import coco.ide.ideapp.projects.responseDto.ProjectListDto;
+import coco.ide.ideapp.projects.responsedto.FolderListDto;
+import coco.ide.ideapp.projects.responsedto.ProjectDto;
+import coco.ide.ideapp.projects.responsedto.ProjectListDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -21,10 +21,10 @@ public class ProjectController {
     private final ProjectService projectService;
 
     @PostMapping("")
-    public ResponseEntity<ProjectDto> createProject(@RequestBody CreateProjectForm form) {
+    public String createProject(@RequestBody CreateProjectForm form) {
         log.info("createProjectForm = {}", form);
-        ProjectDto project = projectService.createProject(form);
-        return ResponseEntity.ok(project);
+        projectService.createProject(form);
+        return "create project ok";
     }
 
     @DeleteMapping("/{projectId}")

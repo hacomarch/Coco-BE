@@ -1,9 +1,9 @@
 package coco.ide.ideapp.projects;
 
 import coco.ide.ideapp.projects.requestdto.CreateProjectForm;
-import coco.ide.ideapp.projects.responseDto.FolderListDto;
-import coco.ide.ideapp.projects.responseDto.ProjectDto;
-import coco.ide.ideapp.projects.responseDto.ProjectListDto;
+import coco.ide.ideapp.projects.responsedto.FolderListDto;
+import coco.ide.ideapp.projects.responsedto.ProjectDto;
+import coco.ide.ideapp.projects.responsedto.ProjectListDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -21,14 +21,16 @@ public class ProjectService {
     private final ProjectRepository projectRepository;
 
     @Transactional
-    public ProjectDto createProject(CreateProjectForm form) {
+    public void createProject(CreateProjectForm form) {
+        if (form.getName() == null || form.getName().trim().isEmpty()) {
+            throw new IllegalArgumentException("프로젝트 명은 빈 칸일 수 없습니다.");
+        }
         Project project = Project.builder()
                 .name(form.getName())
                 .language(form.getLanguage())
                 .build();
 
         projectRepository.save(project);
-        return new ProjectDto(project.getProjectId(), project.getName(), project.getLanguage());
     }
 
     @Transactional

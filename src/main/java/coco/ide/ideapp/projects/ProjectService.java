@@ -1,12 +1,16 @@
 package coco.ide.ideapp.projects;
 
 import coco.ide.ideapp.projects.requestdto.CreateProjectForm;
+import coco.ide.ideapp.projects.responseDto.FolderListDto;
 import coco.ide.ideapp.projects.responseDto.ProjectDto;
+import coco.ide.ideapp.projects.responseDto.ProjectListDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -44,4 +48,20 @@ public class ProjectService {
         return new ProjectDto(project.getProjectId(), project.getName(), project.getLanguage());
     }
 
+    public List<ProjectListDto> findAllProjects() {
+         return projectRepository.findAll()
+                 .stream()
+                .map(p -> new ProjectListDto(p.getProjectId(), p.getName()))
+                .toList();
+    }
+
+    public List<FolderListDto> findFolders(Long projectId) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new RuntimeException("project dose not exist"));
+
+        return project.getFolders()
+                .stream()
+                .map(p -> new FolderListDto(p.getFolderId(), p.getName()))
+                .collect(Collectors.toList());
+    }
 }

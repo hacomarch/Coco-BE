@@ -2,11 +2,15 @@ package coco.ide.ideapp.projects;
 
 import coco.ide.ideapp.projects.requestdto.CreateProjectForm;
 import coco.ide.ideapp.projects.requestdto.UpdateProjectNameForm;
+import coco.ide.ideapp.projects.responseDto.FolderListDto;
 import coco.ide.ideapp.projects.responseDto.ProjectDto;
+import coco.ide.ideapp.projects.responseDto.ProjectListDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -39,5 +43,17 @@ public class ProjectController {
         ProjectDto project = projectService.updateProjectName(projectId, form.getNewName());
 
         return ResponseEntity.ok(project);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<ProjectListDto>> findAllProjects() {
+        List<ProjectListDto> allProjects = projectService.findAllProjects();
+        return ResponseEntity.ok(allProjects);
+    }
+
+    @GetMapping("/{projectId}")
+    public ResponseEntity<List<FolderListDto>> findFolders(@PathVariable Long projectId) {
+        List<FolderListDto> folders = projectService.findFolders(projectId);
+        return ResponseEntity.ok(folders);
     }
 }

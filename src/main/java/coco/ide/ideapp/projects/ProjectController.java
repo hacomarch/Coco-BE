@@ -51,6 +51,7 @@ public class ProjectController {
         return ResponseEntity.ok(allProjects);
     }
 
+    //TODO : 부모 폴더인지 자식 폴더인지 보여줘야 할 것 같음
     @GetMapping("/{projectId}")
     public ResponseEntity<List<FolderListDto>> findFolders(@PathVariable Long projectId) {
         List<FolderListDto> folders = projectService.findFolders(projectId);

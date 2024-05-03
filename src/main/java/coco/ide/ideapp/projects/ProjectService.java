@@ -44,7 +44,7 @@ public class ProjectService {
     @Transactional
     public ProjectDto updateProjectName(Long projectId, String newName) throws IllegalArgumentException{
         Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new RuntimeException("project dose not exist"));
+                .orElseThrow(() -> new RuntimeException("project does not exist"));
 
         project.changeName(newName);
         return new ProjectDto(project.getProjectId(), project.getName(), project.getLanguage());
@@ -59,11 +59,11 @@ public class ProjectService {
 
     public List<FolderListDto> findFolders(Long projectId) {
         Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new RuntimeException("project dose not exist"));
+                .orElseThrow(() -> new RuntimeException("project does not exist"));
 
         return project.getFolders()
                 .stream()
-                .map(p -> new FolderListDto(p.getFolderId(), p.getName()))
+                .map(p -> new FolderListDto(p.getFolderId(), p.getName(), p.getParentFolder().getFolderId()))
                 .collect(Collectors.toList());
     }
 }

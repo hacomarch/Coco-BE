@@ -1,6 +1,7 @@
 package coco.ide.ideapp.projects;
 
 import coco.ide.ideapp.folders.Folder;
+import coco.ide.member.domain.Member;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
@@ -26,9 +27,9 @@ public class Project {
     @NotNull
     private String language;
 
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "member_id")
-//    private Member member;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "member_id")
+    private Member member;
 
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL)
     private List<Folder> folders = new ArrayList<>();

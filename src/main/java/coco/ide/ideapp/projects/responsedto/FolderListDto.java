@@ -6,4 +6,5 @@ import lombok.Data;
 public class FolderListDto {
     private final Long folderId;
     private final String folderName;
+    private final Long parentId;
 }

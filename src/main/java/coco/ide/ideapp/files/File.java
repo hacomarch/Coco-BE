@@ -3,6 +3,7 @@ package coco.ide.ideapp.files;
 import coco.ide.ideapp.folders.Folder;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -11,7 +12,8 @@ import lombok.NoArgsConstructor;
 @Getter
 public class File {
 
-    @Id @GeneratedValue(strategy = GenerationType.AUTO)
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "file_id")
     private Long fileId;
 
@@ -26,6 +28,12 @@ public class File {
     @JoinColumn(name = "folder_id")
     private Folder folder;
 
+    @Builder
+    public File(String name, String path) {
+        this.name = name;
+        this.path = path;
+    }
+
     public void changeName(String name) {
         this.name = name;
     }
@@ -34,9 +42,9 @@ public class File {
         this.path = path;
     }
 
-    public void changeFolder(Folder folder) {
-        if (folder != null) {
-            this.folder = folder;
+    public void setFolder(Folder folder) {
+        this.folder = folder;
+        if (!folder.getFiles().contains(this)) {
             folder.getFiles().add(this);
         }
     }

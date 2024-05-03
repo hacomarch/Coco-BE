@@ -33,13 +33,19 @@ public class Project {
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL)
     private List<Folder> folders = new ArrayList<>();
 
-
     @Builder
-    public Project(String name, String language) {
+    public Project(String name, String language, List<Folder> folders) {
         this.name = name;
         this.language = language;
-        this.folders = new ArrayList<>();
+        this.folders = folders;
     }
+
+//    public void setMember(Member member) {
+//        this.member = member;
+//        if (!member.getProjects().contains(this)) {
+//            member.getProjects().add(this);
+//        }
+//    }
 
     public void changeName(String newName) {
         if (newName == null || newName.trim().isEmpty()) {

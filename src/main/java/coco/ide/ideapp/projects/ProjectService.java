@@ -1,12 +1,16 @@
 package coco.ide.ideapp.projects;
 
 import coco.ide.ideapp.projects.requestdto.CreateProjectForm;
-import coco.ide.ideapp.projects.responseDto.ProjectDto;
+import coco.ide.ideapp.projects.responsedto.FolderListDto;
+import coco.ide.ideapp.projects.responsedto.ProjectDto;
+import coco.ide.ideapp.projects.responsedto.ProjectListDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -17,14 +21,16 @@ public class ProjectService {
     private final ProjectRepository projectRepository;
 
     @Transactional
-    public ProjectDto createProject(CreateProjectForm form) {
+    public void createProject(CreateProjectForm form) {
+        if (form.getName() == null || form.getName().trim().isEmpty()) {
+            throw new IllegalArgumentException("프로젝트 명은 빈 칸일 수 없습니다.");
+        }
         Project project = Project.builder()
                 .name(form.getName())
                 .language(form.getLanguage())
                 .build();
 
         projectRepository.save(project);
-        return new ProjectDto(project.getProjectId(), project.getName(), project.getLanguage());
     }
 
     @Transactional
@@ -44,4 +50,20 @@ public class ProjectService {
         return new ProjectDto(project.getProjectId(), project.getName(), project.getLanguage());
     }
 
+    public List<ProjectListDto> findAllProjects() {
+         return projectRepository.findAll()
+                 .stream()
+                .map(p -> new ProjectListDto(p.getProjectId(), p.getName()))
+                .toList();
+    }
+
+    public List<FolderListDto> findFolders(Long projectId) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new RuntimeException("project dose not exist"));
+
+        return project.getFolders()
+                .stream()
+                .map(p -> new FolderListDto(p.getFolderId(), p.getName()))
+                .collect(Collectors.toList());
+    }
 }

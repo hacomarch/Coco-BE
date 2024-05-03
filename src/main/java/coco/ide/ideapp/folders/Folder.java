@@ -5,6 +5,7 @@ import coco.ide.ideapp.projects.Project;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -37,8 +38,29 @@ public class Folder {
     @OneToMany(mappedBy = "folder", cascade = CascadeType.ALL)
     private List<File> files = new ArrayList<>();
 
-    public void changeName(String name) {
+    @Builder
+    public Folder(String name, Folder parentFolder, List<Folder> childFolders, List<File> files) {
         this.name = name;
+        this.parentFolder = parentFolder;
+        this.childFolders = childFolders;
+        this.files = files;
+    }
+
+    public void setProject(Project project) {
+        this.project = project;
+        if (!project.getFolders().contains(this)) {
+            project.getFolders().add(this);
+        }
+    }
+
+    public void changeName(String newName) {
+        if (newName == null || newName.trim().isEmpty()) {
+            throw new IllegalArgumentException("폴더 명은 빈 칸일 수 없습니다.");
+        }
+        if (!this.name.equals(newName)) {
+            this.name = newName;
+        }
+
     }
 
     public void changeParentFolder(Folder parentFolder) {

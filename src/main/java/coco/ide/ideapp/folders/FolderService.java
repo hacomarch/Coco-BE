@@ -3,8 +3,10 @@ package coco.ide.ideapp.folders;
 import coco.ide.ideapp.folders.requestdto.CreateFolderForm;
 import coco.ide.ideapp.folders.responsedto.FileListDto;
 import coco.ide.ideapp.folders.responsedto.FolderDto;
+import coco.ide.ideapp.projects.Project;
 import coco.ide.ideapp.projects.ProjectRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -47,21 +50,35 @@ public class FolderService {
     }
 
     @Transactional
-    public FolderDto updateFolderName(Long folderId, String newName) {
+    public boolean updateFolderName(Long folderId, String newName) {
         Folder folder = folderRepository.findById(folderId)
                 .orElseThrow(() -> new RuntimeException("folder does not exist"));
 
+        if (checkName(newName, folder)) return false;
+
         folder.changeName(newName);
-        return new FolderDto(folder.getFolderId(), folder.getName());
+        return true;
     }
 
+
+
+    //Todo : 경로 이동 시 이름 중복 확인해야함
+    //리턴값 boolean으로 바꾸고 경로 이동 실패 시 false, 성공 시 true 리턴
     @Transactional
-    public void updateFolderPath(Long folderId, Long parentId) {
+    public boolean updateFolderPath(Long folderId, Long parentId) {
         Folder folder = folderRepository.findById(folderId)
                 .orElseThrow(() -> new RuntimeException("folder does not exist"));
 
         Folder parentFolder = parentId == 0 ? null : folderRepository.findById(parentId).get();
+
+//        if (parentId == 0) {
+//            Project project = projectRepository.findById(folder.getProject().getProjectId()).get();
+//
+//        }
+        if (checkName(folder.getName(), folder)) return false;
+
         folder.changeParentFolder(parentFolder);
+        return true;
     }
 
     public List<FileListDto> findFiles(Long folderId) {
@@ -72,6 +89,33 @@ public class FolderService {
                 .stream()
                 .map(f -> new FileListDto(f.getFileId(), f.getName()))
                 .toList();
+    }
+
+    private boolean checkName(String newName, Folder folder) {
+        if (folder.getParentFolder() == null) {
+            Project project = projectRepository.findById(folder.getProject().getProjectId()).get();
+            boolean isDuplicated = project.getFolders().stream()
+                    .map(f -> f.getName())
+                    .anyMatch(name -> name.equals(newName));
+            log.info("project's folder = {}", project.getFolders());
+
+            if (isDuplicated) {
+                return true;
+            }
+        } else {
+            Folder parentFolder = folderRepository.findById(folder.getParentFolder().getFolderId()).get();
+            boolean isDuplicated = parentFolder.getChildFolders().stream()
+                    .map(f -> f.getName())
+                    .anyMatch(name -> name.equals(newName));
+            List<String> list = parentFolder.getChildFolders().stream().map(f -> f.getName()).toList();
+            for (String s : list) {
+                log.info("child folder = {}", s);
+            }
+            if (isDuplicated) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

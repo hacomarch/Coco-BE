@@ -31,6 +31,8 @@ public class Member {
     @OneToMany(mappedBy = "member")
     private List<Project> projects = new ArrayList<>();
 
+
+
     public Member(String email, String nickname, String password) {
         this.email = email;
         this.nickname = nickname;

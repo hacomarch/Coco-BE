@@ -5,19 +5,17 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.header.writers.StaticHeadersWriter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -31,9 +29,23 @@ public class SecurityConfig {
                 .httpBasic(withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)         // 개발중) csrf 보호 비활성화
                 .headers(headers -> headers
-                        .addHeaderWriter(new StaticHeadersWriter("X-Frame-Options", "DENY"))); // 개발중) frame 옵션 비활성화
+                        .addHeaderWriter(new StaticHeadersWriter("X-Frame-Options", "DENY"))) // 개발중) frame 옵션 비활성화
+                .formLogin((formLogin) -> formLogin
+                        .loginPage("/api/members/login")
+                        .defaultSuccessUrl("/"))
+                .logout((logout) -> logout
+                        .logoutRequestMatcher(new AntPathRequestMatcher("/api/members/logout"))
+                        .logoutSuccessUrl("/api/members/login")
+                        .invalidateHttpSession(true))
+                ;
+
 
         return http.build();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 
 }

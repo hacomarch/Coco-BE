@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class ProjectService {
 
     private final ProjectRepository projectRepository;
@@ -32,6 +33,15 @@ public class ProjectService {
             throw new IllegalArgumentException("프로젝트 ID" + projectId + "는 존재하지 않습니다.");
         }
         projectRepository.deleteById(projectId);
+    }
+
+    @Transactional
+    public ProjectDto updateProjectName(Long projectId, String newName) throws IllegalArgumentException{
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new RuntimeException("project dose not exist"));
+
+        project.changeName(newName);
+        return new ProjectDto(project.getProjectId(), project.getName(), project.getLanguage());
     }
 
 }

@@ -33,6 +33,7 @@ public class Project {
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL)
     private List<Folder> folders = new ArrayList<>();
 
+
     @Builder
     public Project(String name, String language) {
         this.name = name;
@@ -40,4 +41,12 @@ public class Project {
         this.folders = new ArrayList<>();
     }
 
+    public void changeName(String newName) {
+        if (newName == null || newName.trim().isEmpty()) {
+            throw new IllegalArgumentException("프로젝트 명은 빈 칸일 수 없습니다.");
+        }
+        if (!this.name.equals(newName)) {
+            this.name = newName;
+        }
+    }
 }

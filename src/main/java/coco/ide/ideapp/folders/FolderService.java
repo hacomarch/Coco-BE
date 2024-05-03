@@ -1,6 +1,7 @@
 package coco.ide.ideapp.folders;
 
 import coco.ide.ideapp.folders.requestdto.CreateFolderForm;
+import coco.ide.ideapp.folders.responsedto.FileListDto;
 import coco.ide.ideapp.folders.responsedto.FolderDto;
 import coco.ide.ideapp.projects.ProjectRepository;
 import lombok.RequiredArgsConstructor;
@@ -8,6 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -46,10 +49,29 @@ public class FolderService {
     @Transactional
     public FolderDto updateFolderName(Long folderId, String newName) {
         Folder folder = folderRepository.findById(folderId)
-                .orElseThrow(() -> new RuntimeException("folder dose not exist"));
+                .orElseThrow(() -> new RuntimeException("folder does not exist"));
 
         folder.changeName(newName);
         return new FolderDto(folder.getFolderId(), folder.getName());
+    }
+
+    @Transactional
+    public void updateFolderPath(Long folderId, Long parentId) {
+        Folder folder = folderRepository.findById(folderId)
+                .orElseThrow(() -> new RuntimeException("folder does not exist"));
+
+        Folder parentFolder = parentId == 0 ? null : folderRepository.findById(parentId).get();
+        folder.changeParentFolder(parentFolder);
+    }
+
+    public List<FileListDto> findFiles(Long folderId) {
+        Folder folder = folderRepository.findById(folderId)
+                .orElseThrow(() -> new RuntimeException("project does not exist"));
+
+        return folder.getFiles()
+                .stream()
+                .map(f -> new FileListDto(f.getFileId(), f.getName()))
+                .toList();
     }
 
 }

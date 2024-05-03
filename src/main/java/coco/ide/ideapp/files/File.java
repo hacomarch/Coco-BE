@@ -38,13 +38,9 @@ public class File {
         this.name = name;
     }
 
-    public void changePath(String path) {
-        this.path = path;
-    }
-
     public void setFolder(Folder folder) {
         this.folder = folder;
-        if (!folder.getFiles().contains(this)) {
+        if (folder != null && !folder.getFiles().contains(this)) {
             folder.getFiles().add(this);
         }
     }

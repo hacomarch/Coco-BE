@@ -33,19 +33,25 @@ public class FolderController {
         return "delete folder ok";
     }
 
-
+    //Todo : service 로직 실행 결과에 따라서 응답 스트링 나누기
     @PatchMapping("/{folderId}/name")
-    public ResponseEntity<FolderDto> updateFolderName(@PathVariable Long folderId,
+    public String updateFolderName(@PathVariable Long folderId,
                                                       @RequestBody UpdateFolderNameForm form) {
-        FolderDto folderDto = folderService.updateFolderName(folderId, form.getNewName());
-        return ResponseEntity.ok(folderDto);
+        boolean result = folderService.updateFolderName(folderId, form.getNewName());
+        if (!result) {
+            return "update folder name fail";
+        }
+        return "update folder name ok";
     }
 
-    //TODO : 수정하고 난 후에 응답값을 넘겨주기
+    //Todo : service 로직 실행 결과에 따라서 응답 스트링 나누기
     @PatchMapping("/{folderId}/path")
     public String updateFolderPath(@PathVariable Long folderId,
                                    @RequestBody UpdateFolderPathForm form) {
-        folderService.updateFolderPath(folderId, form.getParentId());
+        boolean result = folderService.updateFolderPath(folderId, form.getParentId());
+        if (!result) {
+            return "update folder path fail";
+        }
         return "update folder path ok";
     }
 

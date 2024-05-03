@@ -63,7 +63,7 @@ public class ProjectService {
 
         return project.getFolders()
                 .stream()
-                .map(p -> new FolderListDto(p.getFolderId(), p.getName(), p.getParentFolder().getFolderId()))
+                .map(p -> new FolderListDto(p.getFolderId(), p.getName(), p.getParentFolder() == null ? 0 : p.getParentFolder().getFolderId()))
                 .collect(Collectors.toList());
     }
 }

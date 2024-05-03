@@ -1,6 +1,7 @@
 package coco.ide.ideapp.folders;
 
 import coco.ide.ideapp.folders.requestdto.CreateFolderForm;
+import coco.ide.ideapp.folders.responsedto.FolderDto;
 import coco.ide.ideapp.projects.ProjectRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -32,6 +33,23 @@ public class FolderService {
         folder.setProject(projectRepository.findById(projectId).get());
 
         folderRepository.save(folder);
+    }
+
+    @Transactional
+    public void deleteFolder(Long folderId) throws IllegalArgumentException{
+        if (!folderRepository.existsById(folderId)) {
+            throw new IllegalArgumentException("폴더 ID" + folderId + "는 존재하지 않습니다.");
+        }
+        folderRepository.deleteById(folderId);
+    }
+
+    @Transactional
+    public FolderDto updateFolderName(Long folderId, String newName) {
+        Folder folder = folderRepository.findById(folderId)
+                .orElseThrow(() -> new RuntimeException("folder dose not exist"));
+
+        folder.changeName(newName);
+        return new FolderDto(folder.getFolderId(), folder.getName());
     }
 
 }

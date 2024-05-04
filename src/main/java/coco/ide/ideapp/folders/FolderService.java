@@ -52,34 +52,30 @@ public class FolderService {
     @Transactional
     public boolean updateFolderName(Long folderId, String newName) {
         Folder folder = folderRepository.findById(folderId)
-                .orElseThrow(() -> new RuntimeException("folder does not exist"));
+                .orElseThrow(() -> new RuntimeException("Folder does not exist"));
 
-        if (checkName(newName, folder)) return false;
+        if (isDuplicateName(newName, folder, folder.getParentFolder())) {
+            return false;
+        }
 
         folder.changeName(newName);
         return true;
     }
 
-
-
-    //Todo : 경로 이동 시 이름 중복 확인해야함
-    //리턴값 boolean으로 바꾸고 경로 이동 실패 시 false, 성공 시 true 리턴
     @Transactional
     public boolean updateFolderPath(Long folderId, Long parentId) {
         Folder folder = folderRepository.findById(folderId)
-                .orElseThrow(() -> new RuntimeException("folder does not exist"));
-
+                .orElseThrow(() -> new RuntimeException("Folder does not exist"));
         Folder parentFolder = parentId == 0 ? null : folderRepository.findById(parentId).get();
 
-//        if (parentId == 0) {
-//            Project project = projectRepository.findById(folder.getProject().getProjectId()).get();
-//
-//        }
-        if (checkName(folder.getName(), folder)) return false;
+        if (isDuplicateName(folder.getName(), folder, parentFolder)) {
+            return false;
+        }
 
         folder.changeParentFolder(parentFolder);
         return true;
     }
+
 
     public List<FileListDto> findFiles(Long folderId) {
         Folder folder = folderRepository.findById(folderId)
@@ -91,31 +87,22 @@ public class FolderService {
                 .toList();
     }
 
-    private boolean checkName(String newName, Folder folder) {
-        if (folder.getParentFolder() == null) {
-            Project project = projectRepository.findById(folder.getProject().getProjectId()).get();
-            boolean isDuplicated = project.getFolders().stream()
-                    .map(f -> f.getName())
-                    .anyMatch(name -> name.equals(newName));
-            log.info("project's folder = {}", project.getFolders());
-
-            if (isDuplicated) {
-                return true;
-            }
+    private boolean isDuplicateName(String newName, Folder folder, Folder newParentFolder) {
+        List<Folder> siblings;
+        if (newParentFolder == null) {
+            // 최상위 폴더의 경우, 폴더가 속한 프로젝트 내의 다른 최상위 폴더들과 비교
+            siblings = folder.getProject().getFolders().stream()
+                    .filter(f -> f.getParentFolder() == null && !f.equals(folder))
+                    .collect(Collectors.toList());
         } else {
-            Folder parentFolder = folderRepository.findById(folder.getParentFolder().getFolderId()).get();
-            boolean isDuplicated = parentFolder.getChildFolders().stream()
-                    .map(f -> f.getName())
-                    .anyMatch(name -> name.equals(newName));
-            List<String> list = parentFolder.getChildFolders().stream().map(f -> f.getName()).toList();
-            for (String s : list) {
-                log.info("child folder = {}", s);
-            }
-            if (isDuplicated) {
-                return true;
-            }
-        }
-        return false;
-    }
+            // 하위 폴더의 경우, 부모 폴더의 자식 폴더들과 비교
+            siblings = newParentFolder.getChildFolders().stream()
+                    .filter(f -> !f.equals(folder))
+                    .collect(Collectors.toList());
 
+        }
+
+        return siblings.stream()
+                .anyMatch(f -> f.getName().equals(newName));
+    }
 }

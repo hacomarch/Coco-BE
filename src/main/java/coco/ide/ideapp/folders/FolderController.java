@@ -53,7 +53,6 @@ public class FolderController {
         return "update folder path ok";
     }
 
-    //TODO : 파일 만들고 잘 가져오는지 테스트하기
     @GetMapping("/{folderId}")
     public ResponseEntity<List<FileListDto>> findFiles(@PathVariable Long folderId) {
         List<FileListDto> files = folderService.findFiles(folderId);

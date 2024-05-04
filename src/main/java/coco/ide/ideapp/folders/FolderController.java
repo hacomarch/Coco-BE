@@ -33,10 +33,9 @@ public class FolderController {
         return "delete folder ok";
     }
 
-    //Todo : service 로직 실행 결과에 따라서 응답 스트링 나누기
     @PatchMapping("/{folderId}/name")
     public String updateFolderName(@PathVariable Long folderId,
-                                                      @RequestBody UpdateFolderNameForm form) {
+                                   @RequestBody UpdateFolderNameForm form) {
         boolean result = folderService.updateFolderName(folderId, form.getNewName());
         if (!result) {
             return "update folder name fail";
@@ -44,7 +43,6 @@ public class FolderController {
         return "update folder name ok";
     }
 
-    //Todo : service 로직 실행 결과에 따라서 응답 스트링 나누기
     @PatchMapping("/{folderId}/path")
     public String updateFolderPath(@PathVariable Long folderId,
                                    @RequestBody UpdateFolderPathForm form) {

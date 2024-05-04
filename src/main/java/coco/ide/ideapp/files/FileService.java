@@ -33,7 +33,11 @@ public class FileService {
                 .path("/filedb/" + 1 + "/" + projectId)
                 .build();
 
-        file.setFolder(folderRepository.findById(folderId).get());
+        if (folderId == 0) {
+            file.setProject(projectRepository.findById(projectId).get());
+        } else {
+            file.setFolder(folderRepository.findById(folderId).get());
+        }
 
         fileRepository.save(file);
     }

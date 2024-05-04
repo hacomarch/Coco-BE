@@ -57,6 +57,10 @@ public class ProjectService {
                 .toList();
     }
 
+    /*
+    Todo : 이 메소드가 프로젝트 들어왔을 때 바로 로딩하는거잖아? 그러니까 폴더 뿐만 아니라 최상위 파일도 가져와야 해서
+              Dto도 수정해야하고, 파일 가져오는 코드도 넣어야 할 듯
+     */
     public List<FolderListDto> findFolders(Long projectId) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new RuntimeException("project does not exist"));

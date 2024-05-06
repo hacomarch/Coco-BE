@@ -6,7 +6,6 @@ import coco.ide.chatting.requestDto.RequestChatDto;
 import coco.ide.chatting.responseDto.ResponseChatDto;
 import coco.ide.member.domain.Member;
 import coco.ide.member.repository.MemberRepository;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

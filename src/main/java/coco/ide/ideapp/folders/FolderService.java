@@ -3,8 +3,10 @@ package coco.ide.ideapp.folders;
 import coco.ide.ideapp.folders.requestdto.CreateFolderForm;
 import coco.ide.ideapp.folders.responsedto.FileListDto;
 import coco.ide.ideapp.folders.responsedto.FolderDto;
+import coco.ide.ideapp.projects.Project;
 import coco.ide.ideapp.projects.ProjectRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -47,22 +50,32 @@ public class FolderService {
     }
 
     @Transactional
-    public FolderDto updateFolderName(Long folderId, String newName) {
+    public boolean updateFolderName(Long folderId, String newName) {
         Folder folder = folderRepository.findById(folderId)
-                .orElseThrow(() -> new RuntimeException("folder does not exist"));
+                .orElseThrow(() -> new RuntimeException("Folder does not exist"));
+
+        if (isDuplicateName(newName, folder, folder.getParentFolder())) {
+            return false;
+        }
 
         folder.changeName(newName);
-        return new FolderDto(folder.getFolderId(), folder.getName());
+        return true;
     }
 
     @Transactional
-    public void updateFolderPath(Long folderId, Long parentId) {
+    public boolean updateFolderPath(Long folderId, Long parentId) {
         Folder folder = folderRepository.findById(folderId)
-                .orElseThrow(() -> new RuntimeException("folder does not exist"));
-
+                .orElseThrow(() -> new RuntimeException("Folder does not exist"));
         Folder parentFolder = parentId == 0 ? null : folderRepository.findById(parentId).get();
+
+        if (isDuplicateName(folder.getName(), folder, parentFolder)) {
+            return false;
+        }
+
         folder.changeParentFolder(parentFolder);
+        return true;
     }
+
 
     public List<FileListDto> findFiles(Long folderId) {
         Folder folder = folderRepository.findById(folderId)
@@ -74,4 +87,22 @@ public class FolderService {
                 .toList();
     }
 
+    private boolean isDuplicateName(String newName, Folder folder, Folder newParentFolder) {
+        List<Folder> siblings;
+        if (newParentFolder == null) {
+            // 최상위 폴더의 경우, 폴더가 속한 프로젝트 내의 다른 최상위 폴더들과 비교
+            siblings = folder.getProject().getFolders().stream()
+                    .filter(f -> f.getParentFolder() == null && !f.equals(folder))
+                    .collect(Collectors.toList());
+        } else {
+            // 하위 폴더의 경우, 부모 폴더의 자식 폴더들과 비교
+            siblings = newParentFolder.getChildFolders().stream()
+                    .filter(f -> !f.equals(folder))
+                    .collect(Collectors.toList());
+
+        }
+
+        return siblings.stream()
+                .anyMatch(f -> f.getName().equals(newName));
+    }
 }

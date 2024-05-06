@@ -21,7 +21,11 @@ public class WebSocketConfig implements WebSocketConfigurer {
                 .setAllowedOrigins("*");
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> e505255ca4bff2b21c6e8988a062225370c65514
 =======
 }
 >>>>>>> e505255ca4bff2b21c6e8988a062225370c65514

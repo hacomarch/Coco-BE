@@ -35,21 +35,17 @@ public class File {
     private Folder folder;
 
     @Builder
-    public File(String name, String path) {
+    public File(String name, String path, Project project) {
         this.name = name;
         this.path = path;
-    }
-
-    public void changeName(String name) {
-        this.name = name;
-    }
-
-    //최상위 파일은 프로젝트 필드에 넣어준다.
-    public void setProject(Project project) {
         this.project = project;
         if (!project.getFiles().contains(this)) {
             project.getFiles().add(this);
         }
+    }
+
+    public void changeName(String name) {
+        this.name = name;
     }
 
     public void setFolder(Folder folder) {

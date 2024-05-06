@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/projects/{projectId}/folders/{folderId}/files")
-//Todo : 서비스에서 boolean으로 리턴된 값에 따라서 응답 스트링 처리 필요 하은
 public class FileController {
 
     private final FileService fileService;
@@ -30,13 +29,19 @@ public class FileController {
 
     @PatchMapping("/{fileId}/name")
     public String updateFileName(@PathVariable Long fileId, @RequestBody UpdateFileNameForm form) {
-        fileService.updateFileName(fileId, form.getNewName());
+        boolean isUpdateFileName = fileService.updateFileName(fileId, form.getNewName());
+        if (!isUpdateFileName) {
+            return "update file name fail";
+        }
         return "update file name ok";
     }
 
     @PatchMapping("/{fileId}/path")
     public String updateFilePath(@PathVariable Long fileId, @RequestBody UpdateFilePathForm form) {
-        fileService.updateFilePath(fileId, form.getFolderId());
+        boolean isUpdateFilePath = fileService.updateFilePath(fileId, form.getFolderId());
+        if (!isUpdateFilePath) {
+            return "update file path fail";
+        }
         return "update file path ok";
     }
 

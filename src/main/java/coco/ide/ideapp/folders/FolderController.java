@@ -23,8 +23,12 @@ public class FolderController {
     @PostMapping
     public String createFolder(@PathVariable Long projectId, @RequestBody CreateFolderForm form) {
         log.info("form = {}", form);
-        folderService.createFolder(projectId, form);
-        return "create folder ok";
+        boolean success = folderService.createFolder(projectId, form);
+        if (success) {
+            return "create folder ok";
+        } else {
+            return "folder name duplicate";
+        }
     }
 
     @DeleteMapping("/{folderId}")

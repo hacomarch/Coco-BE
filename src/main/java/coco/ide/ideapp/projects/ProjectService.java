@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.File;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,7 +29,14 @@ public class ProjectService {
                 .language(form.getLanguage())
                 .build();
 
-        projectRepository.save(project);
+        Project savedProject = projectRepository.save(project);
+
+        //프로젝트 생성 시 filedb 밑에 폴더 생성
+        String dirPath = "filedb/" + 2 + "/" + savedProject.getProjectId();
+        File directory = new File(dirPath);
+        if (!directory.exists()) {
+            boolean created = directory.mkdirs();
+        }
     }
 
     @Transactional

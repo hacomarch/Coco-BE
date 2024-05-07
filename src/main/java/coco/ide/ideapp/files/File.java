@@ -54,4 +54,8 @@ public class File {
             folder.getFiles().add(this);
         }
     }
+
+    public void setPath(String path) {
+        this.path = path;
+    }
 }

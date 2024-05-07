@@ -20,7 +20,7 @@ public class ProjectController {
 
     private final ProjectService projectService;
 
-    @PostMapping("")
+    @PostMapping()
     public String createProject(@RequestBody CreateProjectForm form) {
         log.info("createProjectForm = {}", form);
         projectService.createProject(form);

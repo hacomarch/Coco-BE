@@ -4,6 +4,5 @@ import lombok.Data;
 
 @Data
 public class CreateFileForm {
-    private final String name;
-    private final String content;
+    private final String name = null;
 }

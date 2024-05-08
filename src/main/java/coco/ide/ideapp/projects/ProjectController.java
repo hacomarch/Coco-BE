@@ -1,5 +1,6 @@
 package coco.ide.ideapp.projects;
 
+import coco.ide.ideapp.ValidationService;
 import coco.ide.ideapp.projects.requestdto.CreateProjectForm;
 import coco.ide.ideapp.projects.requestdto.UpdateProjectNameForm;
 import coco.ide.ideapp.projects.responsedto.ProjectChildsDto;
@@ -19,12 +20,17 @@ import java.util.List;
 public class ProjectController {
 
     private final ProjectService projectService;
+    private final ValidationService validationService;
 
     @PostMapping()
     public String createProject(@RequestBody CreateProjectForm form) {
         log.info("createProjectForm = {}", form);
-        projectService.createProject(form);
-        return "create project ok";
+        boolean isValid = validationService.isValidFolderProjectName(form.getName());
+        if (isValid) {
+            projectService.createProject(form);
+            return "create project ok";
+        }
+        return "project name is not valid";
     }
 
     @DeleteMapping("/{projectId}")

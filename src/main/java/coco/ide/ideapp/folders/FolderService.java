@@ -11,7 +11,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,9 +31,6 @@ public class FolderService {
 
     @Transactional
     public boolean createFolder(Long projectId, CreateFolderForm form) {
-        if (form.getName() == null || form.getName().trim().isEmpty()) {
-            throw new IllegalArgumentException("폴더 명은 빈 칸일 수 없습니다.");
-        }
 
         if(isDuplicateName(form.getName(), form.getParentId(), projectId)) {
             return false;
@@ -43,22 +45,46 @@ public class FolderService {
 
         folder.setProject(projectRepository.findById(projectId).get());
 
-
         Folder savedFolder = folderRepository.save(folder);
 
-        String dirPath = "filedb/" + 2 + "/" + projectId + "/" + savedFolder.getFolderId();
+        Project findProject = projectRepository.findById(projectId).get();
+        Long memberId = findProject.getMember().getMemberId();
+
+        String basicPath = "filedb/" + memberId + "/" + projectId + "/";
+
+        String dirPath = form.getParentId() == 0 ? basicPath + savedFolder.getFolderId() : basicPath + form.getParentId() + "/" + savedFolder.getFolderId();
         File directory = new File(dirPath);
         if (!directory.exists()) {
-            boolean created = directory.mkdirs();
+            directory.mkdirs();
         }
         return true;
     }
 
     @Transactional
-    public void deleteFolder(Long folderId) throws IllegalArgumentException{
+    public void deleteFolder(Long projectId, Long folderId) throws IllegalArgumentException{
         if (!folderRepository.existsById(folderId)) {
             throw new IllegalArgumentException("폴더 ID" + folderId + "는 존재하지 않습니다.");
         }
+
+        Project findProject = projectRepository.findById(projectId).get();
+        Long memberId = findProject.getMember().getMemberId();
+
+        String dirPath = "filedb/" + memberId + "/" + projectId + "/" + folderId;
+        Path directory = Paths.get(dirPath);
+        try {
+            Files.walk(directory)
+                    .sorted(Comparator.reverseOrder())
+                    .forEach(path -> {
+                        try {
+                            Files.delete(path);
+                        } catch (IOException e) {
+                            System.err.println(e.getMessage());
+                        }
+                    });
+        } catch (IOException e) {
+            System.err.println(e.getMessage());
+        }
+
         folderRepository.deleteById(folderId);
     }
 
@@ -70,13 +96,12 @@ public class FolderService {
         if (isDuplicateName(newName, folder.getParentFolder() != null ? folder.getParentFolder().getFolderId() : null, folder.getProject().getProjectId())) {
             return false;
         }
-
         folder.changeName(newName);
         return true;
     }
 
     @Transactional
-    public boolean updateFolderPath(Long folderId, Long parentId) {
+    public boolean updateFolderPath(Long projectId, Long folderId, Long parentId) {
         Folder folder = folderRepository.findById(folderId)
                 .orElseThrow(() -> new RuntimeException("Folder does not exist"));
         Folder parentFolder = parentId == 0 ? null : folderRepository.findById(parentId).get();
@@ -85,7 +110,31 @@ public class FolderService {
             return false;
         }
 
+        Project findProject = projectRepository.findById(projectId).get();
+        Long memberId = findProject.getMember().getMemberId();
+
+        String basicPath = "filedb/" + memberId + "/" + projectId + "/";
+        String oldPath = folder.getParentFolder() == null ? basicPath : basicPath + folder.getParentFolder().getFolderId() + "/";
+
         folder.changeParentFolder(parentFolder);
+
+        String newPath = parentId == 0 ? basicPath : basicPath + parentId + "/";
+
+        // 원래 파일 위치
+        java.io.File oldFile = new java.io.File(oldPath + folder.getFolderId());
+
+        // 새 파일 위치
+        java.io.File newFile = new java.io.File(newPath + folderId);
+        log.info("oldPath = {}", oldPath);
+        log.info(newFile.getPath());
+
+        // 파일 이동
+        if (oldFile.renameTo(newFile)) {
+            System.out.println("File moved successfully");
+        } else {
+            System.out.println("Failed to move file");
+        }
+
         return true;
     }
 

@@ -1,5 +1,6 @@
 package coco.ide.ideapp.files;
 
+import coco.ide.ideapp.ValidationService;
 import coco.ide.ideapp.files.requestdto.CreateFileForm;
 import coco.ide.ideapp.files.requestdto.UpdateFileContentForm;
 import coco.ide.ideapp.files.requestdto.UpdateFileNameForm;
@@ -13,29 +14,35 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @RequestMapping("/api/projects/{projectId}/folders/{folderId}/files")
 
-//Todo: 파일이나 폴더 생성할 때 이름 검사(특수문자 등등 제한)
-//      파일이나 폴더 이름, 경로 수정, 삭제 시 여기서 반영
-//      Scanner등 입력받는거 처리도 해야함
+//Todo: Scanner등 입력받는거 처리도 해야함
 public class FileController {
 
     private final FileService fileService;
     private final CodeExecuteService codeExecuteService;
+    private final ValidationService validationService;
 
     @PostMapping
     public String createFile(@PathVariable Long projectId,
                              @PathVariable Long folderId,
                              @RequestBody CreateFileForm form) {
+        boolean isValid = validationService.isValidFileName(form.getName());
         boolean success = fileService.createFile(projectId, folderId, form);
-        if (success) {
-            return "create file ok";
-        } else {
-            return "file name duplicate";
+
+        if (!isValid) {
+            return "file name is not valid";
         }
+
+        if (!success) {
+            return "file name duplicated";
+        }
+
+        return "create file ok";
+
     }
 
     @DeleteMapping("/{fileId}")
-    public String deleteFile(@PathVariable Long fileId) {
-        fileService.deleteFile(fileId);
+    public String deleteFile(@PathVariable Long projectId, @PathVariable Long folderId, @PathVariable Long fileId) {
+        fileService.deleteFile(projectId, folderId, fileId);
         return "delete file ok";
     }
 
@@ -49,8 +56,8 @@ public class FileController {
     }
 
     @PatchMapping("/{fileId}/path")
-    public String updateFilePath(@PathVariable Long fileId, @RequestBody UpdateFilePathForm form) {
-        boolean isUpdateFilePath = fileService.updateFilePath(fileId, form.getFolderId());
+    public String updateFilePath(@PathVariable Long projectId, @PathVariable Long fileId, @RequestBody UpdateFilePathForm form) {
+        boolean isUpdateFilePath = fileService.updateFilePath(projectId, form.getFolderId(), fileId);
         if (!isUpdateFilePath) {
             return "update file path fail";
         }

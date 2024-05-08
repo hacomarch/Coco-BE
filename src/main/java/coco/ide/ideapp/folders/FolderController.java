@@ -1,5 +1,6 @@
 package coco.ide.ideapp.folders;
 
+import coco.ide.ideapp.ValidationService;
 import coco.ide.ideapp.folders.requestdto.CreateFolderForm;
 import coco.ide.ideapp.folders.requestdto.UpdateFolderNameForm;
 import coco.ide.ideapp.folders.requestdto.UpdateFolderPathForm;
@@ -19,21 +20,29 @@ import java.util.List;
 public class FolderController {
 
     private final FolderService folderService;
+    private final ValidationService validationService;
 
     @PostMapping
     public String createFolder(@PathVariable Long projectId, @RequestBody CreateFolderForm form) {
         log.info("form = {}", form);
+        boolean isValid = validationService.isValidFolderProjectName(form.getName());
         boolean success = folderService.createFolder(projectId, form);
-        if (success) {
-            return "create folder ok";
-        } else {
-            return "folder name duplicate";
+
+        if (!isValid) {
+            return "folder name is not valid";
         }
+
+        if (!success) {
+            return "folder name duplicated";
+        }
+
+        return "create folder ok";
+
     }
 
     @DeleteMapping("/{folderId}")
-    public String deleteFolder(@PathVariable Long folderId) {
-        folderService.deleteFolder(folderId);
+    public String deleteFolder(@PathVariable Long projectId, @PathVariable Long folderId) {
+        folderService.deleteFolder(projectId, folderId);
         return "delete folder ok";
     }
 
@@ -48,9 +57,9 @@ public class FolderController {
     }
 
     @PatchMapping("/{folderId}/path")
-    public String updateFolderPath(@PathVariable Long folderId,
+    public String updateFolderPath(@PathVariable Long projectId, @PathVariable Long folderId,
                                    @RequestBody UpdateFolderPathForm form) {
-        boolean result = folderService.updateFolderPath(folderId, form.getParentId());
+        boolean result = folderService.updateFolderPath(projectId, folderId, form.getParentId());
         if (!result) {
             return "update folder path fail";
         }

@@ -47,12 +47,12 @@ public class Project {
         this.files = files;
     }
 
-//    public void setMember(Member member) {
-//        this.member = member;
-//        if (!member.getProjects().contains(this)) {
-//            member.getProjects().add(this);
-//        }
-//    }
+    public void setMember(Member member) {
+        this.member = member;
+        if (!member.getProjects().contains(this)) {
+            member.getProjects().add(this);
+        }
+    }
 
     public void changeName(String newName) {
         if (newName == null || newName.trim().isEmpty()) {

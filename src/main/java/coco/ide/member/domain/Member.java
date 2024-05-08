@@ -1,33 +1,44 @@
 package coco.ide.member.domain;
 
+import coco.ide.ideapp.projects.Project;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Data
 @Builder
-@Getter
+@AllArgsConstructor
+@NoArgsConstructor
 @Table(name = "member")
 public class Member {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "member_id")
+    @Column(name = "member_id", nullable = false)
     private Long memberId;
 
-    @Column(name = "name")
-    private String name;
+    @Column(name = "email", nullable = false)
+    private String email;
+
+    @Column(name = "nickname", nullable = false)
+    private String nickname;
 
     @Column(name = "password")
     private String password;
 
-    @Column(name = "nickname")
-    private String nickname;
+    @OneToMany(mappedBy = "member")
+    @Builder.Default
+    private List<Project> projects = new ArrayList<>();
 
-    public Member(Long member_id, String name, String password, String nickname) {
-        this.memberId = member_id;
-        this.name = name;
-        this.password = password;
+    public Member(String email, String nickname, String password) {
+        this.email = email;
         this.nickname = nickname;
+        this.password = password;
     }
 }

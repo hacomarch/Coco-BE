@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.tools.*;
 import java.io.*;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
@@ -46,7 +47,7 @@ public class FileService {
     @Transactional
     public boolean createFile(Long projectId, Long folderId, CreateFileForm form) {
         Project findProject = projectRepository.findById(projectId).get();
-//        Long memberId = findProject.getMember().getMemberId();
+        Long memberId = findProject.getMember().getMemberId();
 
 
         if(isDuplicateName(form.getName(), folderId, projectId)) {
@@ -64,7 +65,7 @@ public class FileService {
         file.setFolder(folderId != 0 ? folderRepository.findById(folderId).get() : null);
 
         //filedb에 파일 생성
-        String dirPath = folderId != 0 ? "filedb/" + 2 + "/" + projectId + "/" + folderId : "filedb/" + 2 + "/" + projectId;
+        String dirPath = folderId != 0 ? "filedb/" + memberId + "/" + projectId + "/" + folderId : "filedb/" + 2 + "/" + projectId;
         java.io.File directory = new java.io.File(dirPath);
         java.io.File createdFile = new java.io.File(directory, form.getName());
 
@@ -89,10 +90,18 @@ public class FileService {
     }
 
     @Transactional
-    public void deleteFile(Long fileId) {
+    public void deleteFile(Long projectId, Long folderId, Long fileId) {
         if (!fileRepository.existsById(fileId)) {
             throw new IllegalArgumentException("파일 ID" + fileId + "는 존재하지 않습니다.");
         }
+        Project findProject = projectRepository.findById(projectId).get();
+        Long memberId = findProject.getMember().getMemberId();
+
+        String fileName = fileRepository.findById(fileId).get().getName();
+        String dirPath = "filedb/" + memberId + "/" + projectId + "/" + folderId + "/" + fileName;
+        java.io.File file = new java.io.File(dirPath);
+        file.delete();
+
         fileRepository.deleteById(fileId);
     }
 
@@ -105,19 +114,51 @@ public class FileService {
             return false;
         }
 
+        Path filePath = Paths.get(file.getPath()).getParent();
+        java.io.File oldFile = new java.io.File(filePath + "/" + file.getName());  // 현재 파일
+        java.io.File newFile = new java.io.File(filePath + "/" + newName);  // 새 파일 이름
+
+        if (oldFile.renameTo(newFile)) {
+            log.info("File renamed successfully");
+        } else {
+            log.info("Failed to rename file");
+        }
+
+
         file.changeName(newName);
+        file.setPath(filePath + "/" + newName);
         return true;
     }
 
     @Transactional
-    public boolean updateFilePath(Long fileId, Long folderId) {
+    public boolean updateFilePath(Long projectId, Long folderId, Long fileId) {
         File file = fileRepository.findById(fileId).get();
 
         if (isDuplicateName(file.getName(), folderId, file.getProject().getProjectId())) {
             return false;
         }
+        Project findProject = projectRepository.findById(projectId).get();
+        Long memberId = findProject.getMember().getMemberId();
 
         Folder folder = folderId != 0 ? folderRepository.findById(folderId).get() : null;
+
+        String basicPath = "filedb/" + memberId + "/" + projectId + "/";
+        String newPath = folderId == 0 ? basicPath : basicPath + folderId + "/";
+        log.info("newPath = {}", newPath + file.getName());
+
+
+        // 원래 파일 위치
+        java.io.File oldFile = new java.io.File(file.getPath());
+
+        // 새 파일 위치
+        java.io.File newFile = new java.io.File(newPath + file.getName());
+
+        // 파일 이동
+        if (oldFile.renameTo(newFile)) {
+            System.out.println("File moved successfully");
+        } else {
+            System.out.println("Failed to move file");
+        }
 
         file.setFolder(folder);
         return true;
@@ -158,5 +199,7 @@ public class FileService {
             throw new RuntimeException("파일 쓰기 중 오류가 발생했습니다.", e);
         }
     }
+
+
 
 }

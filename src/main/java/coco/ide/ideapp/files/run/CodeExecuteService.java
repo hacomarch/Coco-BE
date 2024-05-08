@@ -82,12 +82,15 @@ public class CodeExecuteService {
     private String runJavaProgram(String filePath) {
         String className = new java.io.File(filePath).getName().replace(".java", "");
         try {
-            // Runtime API를 사용하여 java 명령어로 클래스 파일 실행.
+            // 클래스 파일 경로
+            String classFilePath = new java.io.File(filePath).getParent() + "/" + className + ".class";
+
+            // Runtime API를 사용하여 java 명령어로 클래스 파일 실행
             Process process = Runtime.getRuntime().exec("java -cp " + new java.io.File(filePath).getParent() + " " + className);
-            process.waitFor(); // 프로세스가 종료될 때까지 대기.
+            process.waitFor(); // 프로세스가 종료될 때까지 대기
 
             StringBuilder output = new StringBuilder();
-            // 프로세스의 입력 스트림(표준 출력)에서 실행 결과를 읽어옴.
+            // 프로세스의 입력 스트림(표준 출력)에서 실행 결과를 읽어옴
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
@@ -95,7 +98,7 @@ public class CodeExecuteService {
                 }
             }
 
-            // 실행 중 발생한 에러를 처리.
+            // 실행 중 발생한 에러를 처리
             if (process.exitValue() != 0) {
                 try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
                     String line;
@@ -106,12 +109,21 @@ public class CodeExecuteService {
                 return "Runtime error:\n" + output.toString();
             }
 
-            // 프로세스 실행 결과 반환.
+            // 프로세스 실행 결과 반환
             return output.toString();
 
         } catch (IOException | InterruptedException e) {
             Thread.currentThread().interrupt();
             return "Error executing Java program: " + e.getMessage();
+        } finally {
+            // 실행이 완료된 후 클래스 파일 삭제
+            try {
+                Files.deleteIfExists(Paths.get(new java.io.File(filePath).getParent() + "/" + className + ".class"));
+            } catch (IOException e) {
+                log.error("Failed to delete class file: " + e.getMessage());
+            }
         }
     }
+
+
 }

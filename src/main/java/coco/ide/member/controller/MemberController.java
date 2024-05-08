@@ -1,20 +1,23 @@
 package coco.ide.member.controller;
 
+import coco.ide.global.common.SingleResponseDto;
+import coco.ide.global.validation.CustomEmail;
+import coco.ide.member.dto.EmailVerificationResult;
 import coco.ide.member.dto.LoginDto;
 import coco.ide.member.dto.MemberDto;
 import coco.ide.member.dto.MemberRegistrationDto;
 import coco.ide.member.service.MemberService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/members")
@@ -50,5 +53,20 @@ public class MemberController {
             session.invalidate();
         }
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/emails/verification-requests")
+    public ResponseEntity<Void> sendMessage(@RequestParam("email") @Valid @CustomEmail String email) {
+        memberService.sendCodeToEmail(email);
+
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @GetMapping("/emails/verifications")
+    public ResponseEntity<SingleResponseDto<EmailVerificationResult>> verificationEmail(@RequestParam("email") @Valid @CustomEmail String email,
+                                            @RequestParam("code") String authCode) {
+        EmailVerificationResult response = memberService.verifiedCode(email, authCode);
+
+        return new ResponseEntity<>(new SingleResponseDto<>(response), HttpStatus.OK);
     }
 }

@@ -2,15 +2,19 @@ package coco.ide.member.domain;
 
 import coco.ide.ideapp.projects.Project;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
+@Data
+@Builder
 @AllArgsConstructor
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Getter @Builder
+@NoArgsConstructor
 @Table(name = "member")
 public class Member {
 
@@ -29,9 +33,8 @@ public class Member {
     private String password;
 
     @OneToMany(mappedBy = "member")
+    @Builder.Default
     private List<Project> projects = new ArrayList<>();
-
-
 
     public Member(String email, String nickname, String password) {
         this.email = email;

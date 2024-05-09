@@ -23,7 +23,7 @@ public class Member {
     @Column(name = "member_id", nullable = false)
     private Long memberId;
 
-    @Column(name = "email", nullable = false)
+    @Column(name = "email", nullable = false, unique = true)
     private String email;
 
     @Column(name = "nickname", nullable = false)

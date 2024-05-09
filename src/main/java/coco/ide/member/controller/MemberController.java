@@ -2,10 +2,7 @@ package coco.ide.member.controller;
 
 import coco.ide.global.common.SingleResponseDto;
 import coco.ide.global.validation.CustomEmail;
-import coco.ide.member.dto.EmailVerificationResult;
-import coco.ide.member.dto.LoginDto;
-import coco.ide.member.dto.MemberDto;
-import coco.ide.member.dto.MemberRegistrationDto;
+import coco.ide.member.dto.*;
 import coco.ide.member.service.MemberService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -16,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+
 
 @Slf4j
 @RestController
@@ -68,5 +66,12 @@ public class MemberController {
         EmailVerificationResult response = memberService.verifiedCode(email, authCode);
 
         return new ResponseEntity<>(new SingleResponseDto<>(response), HttpStatus.OK);
+    }
+
+    @PutMapping("/{memberId}/profile")
+    public ResponseEntity<MemberDto> updateProfile(@PathVariable("memberId") Long memberId,
+                                                   @RequestBody @Valid MemberUpdateDto updateDto) {
+        MemberDto updateMember = memberService.updateMemberProfile(memberId, updateDto);
+        return ResponseEntity.ok(updateMember);
     }
 }

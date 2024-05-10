@@ -10,4 +10,5 @@ import lombok.Data;
 public class CreateProjectForm {
     private final String name;
     private final String language;
+    private final Long memberId;
 }

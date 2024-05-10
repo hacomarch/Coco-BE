@@ -8,4 +8,5 @@ import lombok.Data;
 public class FileInfoDto {
     private Long fileId;
     private String fileName;
+    private Long parentId;
 }

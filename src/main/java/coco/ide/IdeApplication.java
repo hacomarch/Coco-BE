@@ -18,10 +18,18 @@ public class IdeApplication {
 		return new WebMvcConfigurer() {
 			@Override
 			public void addCorsMappings(CorsRegistry registry) {
+<<<<<<< HEAD
 				registry.addMapping("/**")
 						.allowedOrigins("http://localhost:3000/");
 			}
 		};
 	}
 
+=======
+				//Todo: cors설정 시 프론트 포트로 allowedOrigins 바꿔주면 됨
+				registry.addMapping("/**").allowedOrigins("5176");
+			}
+		};
+	}
+>>>>>>> 4f6d6f3461241f8afca98008526e98ad349241c6
 }

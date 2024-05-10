@@ -2,11 +2,19 @@ package coco.ide.ideapp.projects;
 
 import coco.ide.ideapp.projects.requestdto.CreateProjectForm;
 import coco.ide.ideapp.projects.responsedto.*;
+import coco.ide.member.domain.Member;
+import coco.ide.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -17,18 +25,26 @@ import java.util.stream.Collectors;
 public class ProjectService {
 
     private final ProjectRepository projectRepository;
+    private final MemberRepository memberRepository;
 
     @Transactional
     public void createProject(CreateProjectForm form) {
-        if (form.getName() == null || form.getName().trim().isEmpty()) {
-            throw new IllegalArgumentException("프로젝트 명은 빈 칸일 수 없습니다.");
-        }
         Project project = Project.builder()
                 .name(form.getName())
                 .language(form.getLanguage())
                 .build();
 
-        projectRepository.save(project);
+        Member member = memberRepository.findById(form.getMemberId())
+                .orElseThrow(() -> new RuntimeException("존재하지 않는 멤버"));
+        project.setMember(member);
+        Project savedProject = projectRepository.save(project);
+
+        //프로젝트 생성 시 filedb 밑에 폴더 생성
+        String dirPath = "filedb/" + savedProject.getMember().getMemberId() + "/" + savedProject.getProjectId();
+        File directory = new File(dirPath);
+        if (!directory.exists()) {
+            boolean created = directory.mkdirs();
+        }
     }
 
     @Transactional
@@ -36,7 +52,30 @@ public class ProjectService {
         if (!projectRepository.existsById(projectId)) {
             throw new IllegalArgumentException("프로젝트 ID" + projectId + "는 존재하지 않습니다.");
         }
+
+        Project findProject = projectRepository.findById(projectId).get();
+        Long memberId = findProject.getMember().getMemberId();
+
+        //멤버를 프로젝트 id로 땡겨오는걸로 바꾸기
+        String dirPath = "filedb/" + memberId + "/" + projectId;
+        Path directory = Paths.get(dirPath);
+        try {
+            Files.walk(directory)
+                    .sorted(Comparator.reverseOrder())
+                    .forEach(path -> {
+                        try {
+                            Files.delete(path);
+                        } catch (IOException e) {
+                            System.err.println(e.getMessage());
+                        }
+                    });
+        } catch (IOException e) {
+            System.err.println(e.getMessage());
+        }
+        File project = new File(dirPath);
+        project.delete();
         projectRepository.deleteById(projectId);
+
     }
 
     @Transactional
@@ -55,10 +94,6 @@ public class ProjectService {
                 .toList();
     }
 
-    /*
-    Todo : 이 메소드가 프로젝트 들어왔을 때 바로 로딩하는거잖아? 그러니까 폴더 뿐만 아니라 최상위 파일도 가져와야 해서
-              Dto도 수정해야하고, 파일 가져오는 코드도 넣어야 할 듯 -> 수정 끝 확인 필요
-     */
     public ProjectChildsDto findChilds(Long projectId) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new RuntimeException("project does not exist"));
@@ -69,7 +104,7 @@ public class ProjectService {
                 .collect(Collectors.toList());
 
         List<FileInfoDto> fileDtos = project.getFiles().stream()
-                .map(f -> new FileInfoDto(f.getFileId(), f.getName()))
+                .map(f -> new FileInfoDto(f.getFileId(), f.getName(), f.getFolder() == null ? null : f.getFolder().getFolderId()))
                 .collect(Collectors.toList());
 
         return new ProjectChildsDto(folderDtos, fileDtos);

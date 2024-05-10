@@ -60,7 +60,6 @@ public class Folder {
         if (!this.name.equals(newName)) {
             this.name = newName;
         }
-
     }
 
     public void changeParentFolder(Folder parentFolder) {

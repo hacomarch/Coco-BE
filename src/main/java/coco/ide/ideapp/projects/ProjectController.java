@@ -1,8 +1,9 @@
 package coco.ide.ideapp.projects;
 
+import coco.ide.ideapp.ValidationService;
 import coco.ide.ideapp.projects.requestdto.CreateProjectForm;
 import coco.ide.ideapp.projects.requestdto.UpdateProjectNameForm;
-import coco.ide.ideapp.projects.responsedto.FolderListDto;
+import coco.ide.ideapp.projects.responsedto.ProjectChildsDto;
 import coco.ide.ideapp.projects.responsedto.ProjectDto;
 import coco.ide.ideapp.projects.responsedto.ProjectListDto;
 import lombok.RequiredArgsConstructor;
@@ -19,12 +20,17 @@ import java.util.List;
 public class ProjectController {
 
     private final ProjectService projectService;
+    private final ValidationService validationService;
 
-    @PostMapping("")
+    @PostMapping()
     public String createProject(@RequestBody CreateProjectForm form) {
         log.info("createProjectForm = {}", form);
-        projectService.createProject(form);
-        return "create project ok";
+        boolean isValid = validationService.isValidFolderProjectName(form.getName());
+        if (isValid) {
+            projectService.createProject(form);
+            return "create project ok";
+        }
+        return "project name is not valid";
     }
 
     @DeleteMapping("/{projectId}")
@@ -51,10 +57,10 @@ public class ProjectController {
         return ResponseEntity.ok(allProjects);
     }
 
-    //TODO : 부모 폴더인지 자식 폴더인지 보여줘야 할 것 같음
+    //Todo : 프로젝트 로드 시 최상위 파일들도 불러와야 함. Dto 수정 필요 -> 수정 끝 확인필요
     @GetMapping("/{projectId}")
-    public ResponseEntity<List<FolderListDto>> findFolders(@PathVariable Long projectId) {
-        List<FolderListDto> folders = projectService.findFolders(projectId);
-        return ResponseEntity.ok(folders);
+    public ResponseEntity<ProjectChildsDto> findFolders(@PathVariable Long projectId) {
+        ProjectChildsDto childs = projectService.findChilds(projectId);
+        return ResponseEntity.ok(childs);
     }
 }

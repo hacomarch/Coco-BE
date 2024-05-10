@@ -7,14 +7,12 @@ import org.springframework.stereotype.Service;
 
 import javax.tools.*;
 import java.io.*;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import static javax.tools.JavaCompiler.*;
 
 @Slf4j
 @Service
@@ -24,30 +22,32 @@ public class CodeExecuteService {
             String code = Files.lines(Paths.get(filePath)).collect(Collectors.joining("\n"));
 
             if (inputs == null || inputs.length == 0) {
-                return "입력 인자가 잘못되었습니다. 필요한 입력 값을 제공해 주세요.";
+                return "입력 인자가 없습니다. 필요한 입력 값을 제공해 주세요.";
             }
 
-            List<Object> typeInputs = checkIfInputIsRequired(code, inputs);
-            if (typeInputs == null) {
-                return "입력 타입이 잘못되었습니다.";
+            List<Object> typeInputs;
+            try {
+                typeInputs = checkIfInputIsRequired(code, inputs);
+            } catch (IllegalArgumentException e) {
+                return e.getMessage();
             }
 
             JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+
             StandardJavaFileManager fileManager = compiler.getStandardFileManager(null, null, null);
 
-            Iterable<? extends JavaFileObject> compilationUnits = fileManager.getJavaFileObjectsFromStrings(Arrays.asList(filePath));
+            Iterable<? extends JavaFileObject> compilationUnits = fileManager.getJavaFileObjectsFromStrings(List.of(filePath));
 
-            JavaCompiler.CompilationTask task = compiler.getTask(null, fileManager, null, null, null, compilationUnits);
+            CompilationTask task = compiler.getTask(null, fileManager, null, null, null, compilationUnits);
 
-            boolean result = task.call();
-            log.info("result = {}", result);
-            if (result) {
+            if (task.call()) {
                 System.out.println("Compilation successful");
             } else {
                 System.out.println("Compilation failed");
             }
 
             fileManager.close();
+
             return runJavaProgram(filePath, typeInputs);
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -65,6 +65,7 @@ public class CodeExecuteService {
             ProcessBuilder builder = new ProcessBuilder("java", "-cp", new File(filePath).getParent(), className);
             builder.redirectInput(new File(inputFilePath));
             builder.redirectErrorStream(true);
+
             Process process = builder.start();
 
             StringBuilder output = new StringBuilder();
@@ -89,15 +90,55 @@ public class CodeExecuteService {
         }
     }
 
-    private void deleteFile(String filePath) {
-        File file = new File(filePath);
-        if (file.exists()) {
-            boolean deleted = file.delete();
-            if (!deleted) {
-                log.error("Failed to delete file: {}", filePath);
-            } else {
-                log.info("File deleted successfully: {}", filePath);
+    private List<Object> checkIfInputIsRequired(String code, String[] input) {
+        InputUsageVisitor visitor = new InputUsageVisitor();
+        CompilationUnit cu = StaticJavaParser.parse(code);
+        cu.accept(visitor, null);
+
+        if (visitor.isInputRequired()) {
+            return validateAndConvertInputs(visitor, input);
+        }
+        return null;
+    }
+
+    private List<Object> validateAndConvertInputs(InputUsageVisitor visitor, String[] inputs) {
+        if (visitor.getInputSequence().size() != inputs.length) {
+            throw new IllegalArgumentException("입력 개수가 일치하지 않습니다.");
+        }
+
+        List<Object> typedInputs = new ArrayList<>();
+        try {
+            for (int i = 0; i < inputs.length; i++) {
+                String expectedType = visitor.getInputSequence().get(i);
+                String inputValue = inputs[i];
+                Object convertedValue = convertInput(inputValue, expectedType);
+
+                if (convertedValue == null) {
+                    throw new IllegalArgumentException("유효하지 않은 입력 타입입니다 : " + expectedType);
+                }
+                typedInputs.add(convertedValue);
             }
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("입력 형식 오류 : " + e.getMessage());
+        }
+        return typedInputs;
+    }
+
+    private Object convertInput(String input, String type) {
+        try {
+            return switch (type) {
+                case "nextInt" -> Integer.parseInt(input);
+                case "nextDouble" -> Double.parseDouble(input);
+                case "nextFloat" -> Float.parseFloat(input);
+                case "nextLong" -> Long.parseLong(input);
+                case "nextShort" -> Short.parseShort(input);
+                case "nextByte" -> Byte.parseByte(input);
+                case "nextBoolean" -> Boolean.parseBoolean(input);
+                case "next", "nextLine" -> input;
+                default -> null;
+            };
+        } catch (NumberFormatException ex) {
+            return null;
         }
     }
 
@@ -111,101 +152,15 @@ public class CodeExecuteService {
         }
     }
 
-    private List<Object> checkIfInputIsRequired(String code, String[] input) {
-        InputUsageVisitor visitor = new InputUsageVisitor();
-        CompilationUnit cu = StaticJavaParser.parse(code);
-        cu.accept(visitor, null);
-
-        if (visitor.isInputRequired() && checkInputType(visitor, input)) {
-            return injectInputsAndRun(visitor, input);
-        }
-        return null;
-    }
-
-    private boolean checkInputType(InputUsageVisitor visitor, String[] inputs) {
-        if (visitor.getInputSequence().size() != inputs.length) {
-            return false;
-        }
-
-        try {
-            for (int i = 0; i < inputs.length; i++) {
-                String expectedType = visitor.getInputSequence().get(i);
-                String inputValue = inputs[i];
-
-                switch (expectedType) {
-                    case "nextInt":
-                        Integer.parseInt(inputValue);
-                        break;
-                    case "nextDouble":
-                        Double.parseDouble(inputValue);
-                        break;
-                    case "nextFloat":
-                        Float.parseFloat(inputValue);
-                        break;
-                    case "nextLong":
-                        Long.parseLong(inputValue);
-                        break;
-                    case "nextShort":
-                        Short.parseShort(inputValue);
-                        break;
-                    case "nextByte":
-                        Byte.parseByte(inputValue);
-                        break;
-                    case "nextBoolean":
-                        if (!inputValue.equalsIgnoreCase("true") && !inputValue.equalsIgnoreCase("false")) {
-                            return false;
-                        }
-                        break;
-                    case "next":
-                    case "nextLine":
-                        break;
-                    default:
-                        return false;
-                }
-            }
-        } catch (NumberFormatException e) {
-            return false;
-        }
-        return true;
-    }
-
-    private List<Object> injectInputsAndRun(InputUsageVisitor visitor, String[] inputs) {
-        List<Object> typedInputs = new ArrayList<>();
-
-        for (int i = 0; i < inputs.length; i++) {
-            String expectedType = visitor.getInputSequence().get(i);
-            String inputValue = inputs[i];
-
-            switch (expectedType) {
-                case "nextInt":
-                    typedInputs.add(Integer.parseInt(inputValue));
-                    break;
-                case "nextDouble":
-                    typedInputs.add(Double.parseDouble(inputValue));
-                    break;
-                case "nextFloat":
-                    typedInputs.add(Float.parseFloat(inputValue));
-                    break;
-                case "nextLong":
-                    typedInputs.add(Long.parseLong(inputValue));
-                    break;
-                case "nextShort":
-                    typedInputs.add(Short.parseShort(inputValue));
-                    break;
-                case "nextByte":
-                    typedInputs.add(Byte.parseByte(inputValue));
-                    break;
-                case "nextBoolean":
-                    typedInputs.add(Boolean.parseBoolean(inputValue));
-                    break;
-                case "next":
-                case "nextLine":
-                    typedInputs.add(inputValue);
-                    break;
+    private void deleteFile(String filePath) {
+        File file = new File(filePath);
+        if (file.exists()) {
+            boolean deleted = file.delete();
+            if (!deleted) {
+                log.error("Failed to delete file: {}", filePath);
+            } else {
+                log.info("File deleted successfully: {}", filePath);
             }
         }
-
-        return typedInputs;
     }
-
 }

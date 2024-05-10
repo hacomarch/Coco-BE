@@ -34,6 +34,12 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)         // 개발중) csrf 보호 비활성화
                 .headers(headers -> headers
                         .addHeaderWriter(new StaticHeadersWriter("X-Frame-Options", "DENY"))) // 개발중) frame 옵션 비활성화
+                .formLogin((formLogin) -> formLogin
+                        .loginPage("/api/members/login")
+                        .defaultSuccessUrl("/", true)
+                        .failureForwardUrl("/api/members/login")
+                        .permitAll()
+                )
                 .logout((logout) -> logout
                         .logoutRequestMatcher(new AntPathRequestMatcher("/api/members/logout"))
                         .logoutSuccessUrl("/api/members/login")

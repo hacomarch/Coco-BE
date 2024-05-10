@@ -9,8 +9,7 @@ public enum ExceptionCode {
     AUTH_CODE_INVALID("The provided authentication code is invalid."),
     MEMBER_NOT_FOUND("Member not found."),
     EMAIL_SENDING_ERROR("Error occurred while sending email."),
-    UNABLE_TO_SEND_EMAIL("Unable to send email."),
-    UNAUTHORIZED("Unauthorized access.");
+    UNABLE_TO_SEND_EMAIL("Unable to send email.");
 
     private final String description;
 

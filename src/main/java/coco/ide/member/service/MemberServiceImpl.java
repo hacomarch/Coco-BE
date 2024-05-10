@@ -4,10 +4,7 @@ import coco.ide.global.common.BusinessLogicException;
 import coco.ide.global.common.ExceptionCode;
 import coco.ide.global.common.RedisService;
 import coco.ide.member.domain.Member;
-import coco.ide.member.dto.EmailVerificationResult;
-import coco.ide.member.dto.LoginDto;
-import coco.ide.member.dto.MemberDto;
-import coco.ide.member.dto.MemberRegistrationDto;
+import coco.ide.member.dto.*;
 import coco.ide.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -46,31 +43,47 @@ public class MemberServiceImpl implements MemberService {
 
     @Override
     public MemberDto login(LoginDto loginDto) {
-        Member member = memberRepository.findByEmail(loginDto.getEmail());
-        if (member != null && passwordEncoder.matches(loginDto.getPassword(), member.getPassword())) {
-            return new MemberDto(member.getMemberId(), member.getEmail(), member.getNickname());
-        } else {
-            return null;
+        Optional<Member> optionalMember = memberRepository.findByEmail(loginDto.getEmail());
+
+        if (optionalMember.isPresent()) {
+            Member member = optionalMember.get();
+            if (passwordEncoder.matches(loginDto.getPassword(), member.getPassword())) {
+                return new MemberDto(member.getMemberId(), member.getEmail(), member.getNickname());
+            }
         }
+        throw new BusinessLogicException(ExceptionCode.UNAUTHORIZED);
     }
 
     @Override
     public void sendCodeToEmail(String toEmail) {
         this.checkDuplicatedEmail(toEmail);
-        String title = "코코 IDE 이메일 인증 번호 발송";
+        String title = "[코코 IDE] 이메일 인증 번호 발송";
         String authCode = this.createCode();
-        mailService.sendEmail(toEmail, title, authCode);
+        String text = String.format(
+                """
+                COCO IDE 가입을 환영합니다!
+                이메일 인증을 위한 인증 번호를 발급하였습니다.
+                아래의 인증 번호를 입력하여 주세요.
+            
+                인증 번호: %s
+                인증 번호는 30분동안 유효합니다.
+                """,
+                authCode
+        );
+        mailService.sendEmail(toEmail, title, text);
         redisService.setValues(AUTH_CODE_PREFIX + toEmail,
                 authCode, Duration.ofMillis(this.authCodeExpirationMillis));
     }
 
     private void checkDuplicatedEmail(String email) {
-        Optional<Member> member = Optional.ofNullable(memberRepository.findByEmail(email));
+        Optional<Member> member = memberRepository.findByEmail(email);
+
         if (member.isPresent()) {
             log.debug("MemberServiceImpl.checkDuplicatedEmail exception occur email: {}", email);
             throw new BusinessLogicException(ExceptionCode.MEMBER_EXISTS);
         }
     }
+
 
     private String createCode() {
         int length = 6;
@@ -94,4 +107,22 @@ public class MemberServiceImpl implements MemberService {
 
         return EmailVerificationResult.of(authResult);
     }
+
+    public MemberDto updateMemberProfile(Long memberId, MemberUpdateDto updateDto) {
+        Optional<Member> optionalMember = memberRepository.findById(memberId);
+        if (optionalMember.isEmpty()) {
+            throw new BusinessLogicException(ExceptionCode.MEMBER_NOT_FOUND);
+        }
+        Member member = optionalMember.get();
+        if (updateDto.getNickname() != null && !updateDto.getNickname().isEmpty()) {
+            member.setNickname(updateDto.getNickname());
+        }
+        if (updateDto.getPassword() != null && !updateDto.getPassword().isEmpty()) {
+            String hashedPassword = passwordEncoder.encode(updateDto.getPassword());
+            member.setPassword(hashedPassword);
+        }
+        Member updateMember = memberRepository.save(member);
+        return new MemberDto(updateMember.getMemberId(), updateMember.getEmail(), updateMember.getNickname());
+    }
+
 }

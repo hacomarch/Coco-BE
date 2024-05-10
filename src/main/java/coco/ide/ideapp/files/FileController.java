@@ -1,10 +1,7 @@
 package coco.ide.ideapp.files;
 
 import coco.ide.ideapp.ValidationService;
-import coco.ide.ideapp.files.requestdto.CreateFileForm;
-import coco.ide.ideapp.files.requestdto.UpdateFileContentForm;
-import coco.ide.ideapp.files.requestdto.UpdateFileNameForm;
-import coco.ide.ideapp.files.requestdto.UpdateFilePathForm;
+import coco.ide.ideapp.files.requestdto.*;
 import coco.ide.ideapp.files.responsedto.ForExecuteDto;
 import coco.ide.ideapp.files.run.CodeExecuteService;
 import lombok.RequiredArgsConstructor;
@@ -72,9 +69,9 @@ public class FileController {
     }
 
     @PostMapping("/{fileId}")
-    public String compileAndRunFile(@PathVariable Long fileId) {
+    public String compileAndRunFile(@PathVariable Long fileId, @RequestBody InputForm form) {
         ForExecuteDto response = fileService.getFilePath(fileId);
         //Todo: 언어 받는거 변경해야함
-        return codeExecuteService.executeCode(response.getFilePath(), response.getLanguage());
+        return codeExecuteService.executeCode(response.getFilePath(), response.getLanguage(), form.getInputs());
     }
 }

@@ -10,11 +10,11 @@ import java.sql.Blob;
 @Getter
 public class RequestChatDto {
 
-    private Long memberId;
+    private String memberId;
     private String message;
 
     @Builder
-    public RequestChatDto(Long memberId, String message) {
+    public RequestChatDto(String memberId, String message) {
         this.memberId = memberId;
         this.message = message;
     }

@@ -12,12 +12,14 @@ public class ResponseChatDto {
 
     private String message;
     private Long memberId;
+    private Boolean isDeleted;
     private LocalDateTime createdAt;
 
     @Builder
-    public ResponseChatDto(String message, Long memberId, LocalDateTime createdAt) {
+    public ResponseChatDto(String message, Long memberId, Boolean isDeleted, LocalDateTime createdAt) {
         this.message = message;
         this.memberId = memberId;
+        this.isDeleted = isDeleted;
         this.createdAt = createdAt;
     }
 }

@@ -5,11 +5,13 @@ import coco.ide.chatting.responseDto.ResponseChatDto;
 import coco.ide.chatting.service.ChatService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -30,5 +32,18 @@ public class ChatController {
 
         //
         return ResponseEntity.ok("전체 유저에게 메시지 전송 완료!");
+    }
+
+    @ResponseStatus(HttpStatus.OK)
+    @DeleteMapping("/{messageId}")
+    public void deleteMessage(@PathVariable Long messageId) {
+        chatService.deleteMessage(messageId);
+    }
+
+    @ResponseStatus(HttpStatus.OK)
+    @GetMapping("/message")
+    public List<ResponseChatDto> searchMessages(@RequestParam("search") String word) {
+        List<ResponseChatDto> wordList = chatService.searchMessage(word);
+        return wordList;
     }
 }

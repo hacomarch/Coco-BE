@@ -20,6 +20,7 @@ secretGenerator:
   - name: mysql-secret
     files:
       - mysql-secret.yaml
+    behavior: merge  # 또는 replace
 
 # 설정 값들
 vars:

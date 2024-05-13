@@ -28,13 +28,21 @@ public class Chat {
     @JoinColumn(name = "member_id")
     private Member member;
 
+    @Column(name = "is_deleted")
+    private Boolean isDeleted = false;;
+
     @Column
     private LocalDateTime createdAt;
 
+    public void setDeleted(boolean deleted) {
+        isDeleted = deleted;
+    }
+
     @Builder
-    public Chat(String message, Member member, LocalDateTime createdAt) {
+    public Chat(String message, Member member, Boolean isDeleted, LocalDateTime createdAt) {
         this.message = message;
         this.member = member;
+        this.isDeleted = isDeleted;
         this.createdAt = createdAt;
     }
 }

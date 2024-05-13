@@ -1,0 +1,12 @@
+namespace: COCODAS
+resources:
+  - backend.yaml
+  - ingress.yaml
+  - mysql-deployment.yaml
+  - mysql-pv.yaml
+  - mysql-secret.yaml
+  - mysql-service.yaml
+configMapGenerator:
+  - name: init-db
+    files:
+      - configs/init.sql

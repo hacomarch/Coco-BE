@@ -13,7 +13,6 @@ import org.springframework.web.socket.config.annotation.*;
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer, WebSocketConfigurer {
   
-    private final WebSocketHandler webSocketHandler;
     private final CodeExecuteService codeExecuteService;
 
     @Override
@@ -23,13 +22,16 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer, WebSoc
                 .withSockJS();
     }
     @Override
-    public void configureMessageBroker(MessageBrokerRegistry registry){
+    public void configureMessageBroker(MessageBrokerRegistry registry) {
         registry.enableSimpleBroker("/topic");    // 구독하는 사용자들에게 메시지 전달
         registry.setApplicationDestinationPrefixes("/app");        // 메세지 송신(SEND 요청 처리)
-      
+    }
+
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         registry.addHandler(new JavaExecutionWebSocketHandler(codeExecuteService), "/execute")
                 .setAllowedOrigins("*");
     }
 }
+
+

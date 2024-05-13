@@ -1,165 +1,96 @@
 package coco.ide.ideapp.files.run;
 
-import com.github.javaparser.StaticJavaParser;
-import com.github.javaparser.ast.CompilationUnit;
+import coco.ide.ideapp.files.File;
+import coco.ide.ideapp.files.FileRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.socket.TextMessage;
+import org.springframework.web.socket.WebSocketSession;
 
-import javax.tools.*;
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import static javax.tools.JavaCompiler.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
+//TODO : 언어 추가 - 파이썬, JS, C, C++, C#, GO, Rust, Dart, Typescript, Kotlin, Swift, Ruby
 public class CodeExecuteService {
-    public String executeCode(String filePath, String language, String[] inputs) {
-        try {
-            String code = Files.lines(Paths.get(filePath)).collect(Collectors.joining("\n"));
+    private Process process;
+    private BufferedWriter processInputWriter;
 
-            if (inputs == null || inputs.length == 0) {
-                return "입력 인자가 없습니다. 필요한 입력 값을 제공해 주세요.";
+    private final FileRepository fileRepository;
+
+    public void runJavaProgram(String filePath, Long fileId, String command, WebSocketSession session) throws IOException {
+        String absolutePath = "/Users/haeun/Desktop/goormton/IDE/Coco-BE/filedb/";
+        String newFilePath = absolutePath + filePath;
+
+        File file = fileRepository.findById(fileId)
+                .orElseThrow(() -> new RuntimeException("존재하지 않는 파일"));
+        int dotIndex = file.getName().lastIndexOf('.');
+
+        String language = file.getProject().getLanguage();
+
+        List<String> commandDocker = new ArrayList<>();
+        if (command.equals("run")) {
+            if (language.equals("java")) {
+                commandDocker = List.of(
+                        "docker", "run", "--rm", "-i",
+                        "-v", newFilePath + ":/user_files",
+                        "-w", "/user_files",
+                        "openjdk:latest",
+                        "sh", "-c",
+                        "javac " +  file.getName() + " && java " + file.getName().substring(0, dotIndex)
+                );
+            } else if (language.equals("python")) {
+                commandDocker = List.of(
+                        "docker", "run", "--rm", "-i",
+                        "-v", newFilePath + ":/user_files",
+                        "-w", "/user_files",
+                        "python:latest",
+                        "python", file.getName()
+                );
             }
 
-            List<Object> typeInputs;
+            ProcessBuilder processBuilder = new ProcessBuilder(commandDocker);
+            process = processBuilder.start();
+
+            processInputWriter = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
+
+            new Thread(() -> {
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        session.sendMessage(new TextMessage(line));
+                    }
+                    session.sendMessage(new TextMessage("InputStreamClosed"));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }).start();
+
+            new Thread(() -> {
+                try (BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+                    String line;
+                    while ((line = errorReader.readLine()) != null) {
+                        session.sendMessage(new TextMessage("ERROR: " + line));
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }).start();
+        }
+    }
+
+    public void handleUserInput(String input) {
+        if (processInputWriter != null) {
             try {
-                typeInputs = checkIfInputIsRequired(code, inputs);
-            } catch (IllegalArgumentException e) {
-                return e.getMessage();
-            }
-
-            JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-
-            StandardJavaFileManager fileManager = compiler.getStandardFileManager(null, null, null);
-
-            Iterable<? extends JavaFileObject> compilationUnits = fileManager.getJavaFileObjectsFromStrings(List.of(filePath));
-
-            CompilationTask task = compiler.getTask(null, fileManager, null, null, null, compilationUnits);
-
-            if (task.call()) {
-                System.out.println("Compilation successful");
-            } else {
-                System.out.println("Compilation failed");
-            }
-
-            fileManager.close();
-
-            return runJavaProgram(filePath, typeInputs);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private String runJavaProgram(String filePath, List<Object> inputs) {
-        String className = new File(filePath).getName().replace(".java", "");
-        String inputFilePath = Paths.get(new File(filePath).getParent(), className + ".input").toString();
-        String classFilePath = Paths.get(new File(filePath).getParent(), className + ".class").toString();
-
-        try {
-            writeInputToFile(inputs, inputFilePath);
-
-            ProcessBuilder builder = new ProcessBuilder("java", "-cp", new File(filePath).getParent(), className);
-            builder.redirectInput(new File(inputFilePath));
-            builder.redirectErrorStream(true);
-
-            Process process = builder.start();
-
-            StringBuilder output = new StringBuilder();
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    output.append(line).append("\n");
-                }
-            }
-            process.waitFor();
-
-            deleteFile(inputFilePath);
-            deleteFile(classFilePath);
-
-            return output.toString();
-        } catch (IOException | InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return "Error executing Java program: " + e.getMessage();
-        } finally {
-            deleteFile(inputFilePath);
-            deleteFile(classFilePath);
-        }
-    }
-
-    private List<Object> checkIfInputIsRequired(String code, String[] input) {
-        InputUsageVisitor visitor = new InputUsageVisitor();
-        CompilationUnit cu = StaticJavaParser.parse(code);
-        cu.accept(visitor, null);
-
-        if (visitor.isInputRequired()) {
-            return validateAndConvertInputs(visitor, input);
-        }
-        return null;
-    }
-
-    private List<Object> validateAndConvertInputs(InputUsageVisitor visitor, String[] inputs) {
-        if (visitor.getInputSequence().size() != inputs.length) {
-            throw new IllegalArgumentException("입력 개수가 일치하지 않습니다.");
-        }
-
-        List<Object> typedInputs = new ArrayList<>();
-        try {
-            for (int i = 0; i < inputs.length; i++) {
-                String expectedType = visitor.getInputSequence().get(i);
-                String inputValue = inputs[i];
-                Object convertedValue = convertInput(inputValue, expectedType);
-
-                if (convertedValue == null) {
-                    throw new IllegalArgumentException("유효하지 않은 입력 타입입니다 : " + expectedType);
-                }
-                typedInputs.add(convertedValue);
-            }
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("입력 형식 오류 : " + e.getMessage());
-        }
-        return typedInputs;
-    }
-
-    private Object convertInput(String input, String type) {
-        try {
-            return switch (type) {
-                case "nextInt" -> Integer.parseInt(input);
-                case "nextDouble" -> Double.parseDouble(input);
-                case "nextFloat" -> Float.parseFloat(input);
-                case "nextLong" -> Long.parseLong(input);
-                case "nextShort" -> Short.parseShort(input);
-                case "nextByte" -> Byte.parseByte(input);
-                case "nextBoolean" -> Boolean.parseBoolean(input);
-                case "next", "nextLine" -> input;
-                default -> null;
-            };
-        } catch (NumberFormatException ex) {
-            return null;
-        }
-    }
-
-    private void writeInputToFile(List<Object> inputs, String filePath) throws IOException {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
-            for (Object input : inputs) {
-                writer.write(input.toString());
-                writer.newLine();
-                writer.flush();
-            }
-        }
-    }
-
-    private void deleteFile(String filePath) {
-        File file = new File(filePath);
-        if (file.exists()) {
-            boolean deleted = file.delete();
-            if (!deleted) {
-                log.error("Failed to delete file: {}", filePath);
-            } else {
-                log.info("File deleted successfully: {}", filePath);
+                processInputWriter.write(input);
+                processInputWriter.newLine();
+                processInputWriter.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
     }

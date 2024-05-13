@@ -85,7 +85,7 @@ public class MemberServiceImpl implements MemberService {
 
     // 인증 코드 생성
     private String createCode() {
-        int length = 6;
+        int length = 5;
         try {
             Random random = SecureRandom.getInstanceStrong();
             StringBuilder builder = new StringBuilder(length);

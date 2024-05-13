@@ -1,12 +1,33 @@
-namespace: COCODAS
+namespace: cocoIDE
+# 리소스 목록
 resources:
+  - mysql-pv.yaml
+  - mysql-pvc.yaml
+  - mysql-secret.yaml
+  - mysql-deployment.yaml
+  - mysql-service.yaml
   - backend.yaml
   - ingress.yaml
-  - mysql-deployment.yaml
-  - mysql-pv.yaml
-  - mysql-secret.yaml
-  - mysql-service.yaml
+
+# ConfigMap 생성 (init.sql 파일 사용)
 configMapGenerator:
-  - name: init-db
+  - name: mysql-initdb-config
     files:
-      - configs/init.sql
+      - config/init.sql
+
+# Secret 생성 (Secret 파일 사용)
+secretGenerator:
+  - name: mysql-secret
+    files:
+      - mysql-secret.yaml
+    behavior: merge  # 또는 replace
+
+# 설정 값들
+vars:
+  - name: MYSQL_ROOT_PASSWORD
+    objref:
+      kind: Secret
+      name: mysql-secret
+      apiVersion: v1
+    fieldref:
+      fieldpath: data.mysql-root-password

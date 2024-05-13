@@ -1,22 +1,33 @@
-# Use an official OpenJDK runtime as a parent image
-FROM openjdk:17-jdk-slim
+# Stage 1: Build stage
+FROM openjdk:17-slim as build
 
-# Set the working directory
 WORKDIR /app
 
-# Copy the application files to the container
-COPY ./ ./
+# Copy project files to the working directory
+COPY . .
 
-# Expose the application port
-EXPOSE 8080
+# Configure proxy for Gradle
+RUN mkdir -p /root/.gradle && \
+    echo "systemProp.http.proxyHost=krmp-proxy.9rum.cc\nsystemProp.http.proxyPort=3128\nsystemProp.https.proxyHost=krmp-proxy.9rum.cc\nsystemProp.https.proxyPort=3128" > /root/.gradle/gradle.properties
+
+# Make gradlew executable and build the project
+RUN chmod +x gradlew && ./gradlew build -x test
+
+# List the build output to verify
+RUN ls /app/build/libs/
+
+# Stage 2: Runtime stage
+FROM openjdk:17-slim
+VOLUME /tmp
+
+# Copy the built JAR file from the build stage
+COPY --from=build /app/build/libs/*.jar app.jar
 
 # Install Python and Redis
 RUN apt-get update && \
     apt-get install -y python3 python3-pip redis-server && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Define environment variable for the Java app
-ENV JAVA_OPTS=""
-
-# Start Redis and then run the Java application
-ENTRYPOINT ["sh", "-c", "redis-server —daemonize yes && java $JAVA_OPTS -jar app.jar"]
+# Set the entry point to run the application
+ENTRYPOINT ["java","-jar","/app.jar"]
+EXPOSE 8080/tcp

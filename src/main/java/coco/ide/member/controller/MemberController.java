@@ -2,10 +2,7 @@ package coco.ide.member.controller;
 
 import coco.ide.global.common.SingleResponseDto;
 import coco.ide.global.validation.CustomEmail;
-import coco.ide.member.dto.EmailVerificationResult;
-import coco.ide.member.dto.LoginDto;
-import coco.ide.member.dto.MemberDto;
-import coco.ide.member.dto.MemberRegistrationDto;
+import coco.ide.member.dto.*;
 import coco.ide.member.service.MemberService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -65,8 +62,16 @@ public class MemberController {
     @GetMapping("/emails/verifications")
     public ResponseEntity<SingleResponseDto<EmailVerificationResult>> verificationEmail(@RequestParam("email") @Valid @CustomEmail String email,
                                             @RequestParam("code") String authCode) {
-        EmailVerificationResult response = memberService.verifiedCode(email, authCode);
+        EmailVerificationResult response = memberService.verifyCode(email, authCode);
 
         return new ResponseEntity<>(new SingleResponseDto<>(response), HttpStatus.OK);
+    }
+
+
+    @PutMapping("/{memberId}/profile")
+    public ResponseEntity<MemberDto> updateProfile(@PathVariable("memberId") Long memberId,
+                                                   @RequestBody @Valid MemberUpdateDto updateDto) {
+        MemberDto updateMember = memberService.updateMemberProfile(memberId, updateDto);
+        return ResponseEntity.ok(updateMember);
     }
 }

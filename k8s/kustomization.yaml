@@ -1,0 +1,7 @@
+namespace: default
+resources:
+  - backend.yaml
+  - mysql-deployment.yaml
+  - mysql-pv.yaml
+  - mysql-secret.yaml
+  - mysql-service.yaml

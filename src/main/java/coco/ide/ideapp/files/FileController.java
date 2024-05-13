@@ -2,16 +2,18 @@ package coco.ide.ideapp.files;
 
 import coco.ide.ideapp.ValidationService;
 import coco.ide.ideapp.files.requestdto.*;
-import coco.ide.ideapp.files.responsedto.ForExecuteDto;
 import coco.ide.ideapp.files.run.CodeExecuteService;
+import coco.ide.ideapp.files.run.JavaExecutionWebSocketHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.socket.WebSocketSession;
+
+import java.io.IOException;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/projects/{projectId}/folders/{folderId}/files")
 
-//Todo: Scanner등 입력받는거 처리도 해야함
 public class FileController {
 
     private final FileService fileService;
@@ -61,17 +63,19 @@ public class FileController {
         return "update file path ok";
     }
 
-
     @PatchMapping("/{fileId}/content")
-    public String updateFileContent (@PathVariable Long fileId, @RequestBody UpdateFileContentForm form) {
+    public String updateFileContent(@PathVariable Long fileId, @RequestBody UpdateFileContentForm form) {
         fileService.updateFileContent(fileId, form.getCode());
         return "수정 성공";
     }
 
     @PostMapping("/{fileId}")
-    public String compileAndRunFile(@PathVariable Long fileId, @RequestBody InputForm form) {
-        ForExecuteDto response = fileService.getFilePath(fileId);
-        //Todo: 언어 받는거 변경해야함
-        return codeExecuteService.executeCode(response.getFilePath(), response.getLanguage(), form.getInputs());
+    public void runCommand(@PathVariable Long projectId,
+                           @PathVariable Long folderId,
+                           @PathVariable Long fileId,
+                           @RequestBody CommandRequest request) throws IOException {
+        WebSocketSession session = JavaExecutionWebSocketHandler.getSessionById(request.getSessionId());
+        String filePath = projectId + "/" + folderId + "/";
+        codeExecuteService.runJavaProgram(filePath, fileId, request.getCommand(), session);
     }
 }

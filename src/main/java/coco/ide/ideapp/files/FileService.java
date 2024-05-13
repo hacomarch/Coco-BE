@@ -1,7 +1,6 @@
 package coco.ide.ideapp.files;
 
 import coco.ide.ideapp.files.requestdto.CreateFileForm;
-import coco.ide.ideapp.files.requestdto.UpdateFileNameForm;
 import coco.ide.ideapp.files.responsedto.ForExecuteDto;
 import coco.ide.ideapp.folders.Folder;
 import coco.ide.ideapp.folders.FolderRepository;
@@ -12,16 +11,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.tools.*;
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -34,10 +27,6 @@ public class FileService {
     private final FolderRepository folderRepository;
     private final ProjectRepository projectRepository;
 
-    //TODO : 일단 memberId를 직접 가져와서 넣는 걸로 하기
-    // 추후에 세션 값의 멤버 id를 가져와도 좋을 듯?
-
-
     public ForExecuteDto getFilePath(Long fileId) {
         File file = fileRepository.findById(fileId)
                 .orElseThrow(() -> new RuntimeException("파일이 없습니다."));
@@ -49,11 +38,9 @@ public class FileService {
         Project findProject = projectRepository.findById(projectId).get();
         Long memberId = findProject.getMember().getMemberId();
 
-
         if(isDuplicateName(form.getName(), folderId, projectId)) {
             return false;
         }
-
 
         File file = File.builder()
                 .name(form.getName())
@@ -61,11 +48,10 @@ public class FileService {
                 .project(findProject)
                 .build();
 
-
         file.setFolder(folderId != 0 ? folderRepository.findById(folderId).get() : null);
 
         //filedb에 파일 생성
-        String dirPath = folderId != 0 ? "filedb/" + memberId + "/" + projectId + "/" + folderId : "filedb/" + 2 + "/" + projectId;
+        String dirPath = folderId != 0 ? "filedb/" + memberId + "/" + projectId + "/" + folderId : "filedb/" + memberId + "/" + projectId;
         java.io.File directory = new java.io.File(dirPath);
         java.io.File createdFile = new java.io.File(directory, form.getName());
 
@@ -164,7 +150,6 @@ public class FileService {
         return true;
     }
 
-
     private boolean isDuplicateName(String newName, Long parentId, Long projectId) {
         List<File> siblings;
         if (parentId == null || parentId == 0) {
@@ -199,7 +184,4 @@ public class FileService {
             throw new RuntimeException("파일 쓰기 중 오류가 발생했습니다.", e);
         }
     }
-
-
-
 }

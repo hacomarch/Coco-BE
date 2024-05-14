@@ -21,7 +21,7 @@ FROM openjdk:17-slim
 VOLUME /tmp
 
 # Copy the built JAR file from the build stage
-COPY --from=build /app/build/libs/*.jar app.jar
+COPY --from=build /app/build/libs/*.jar /app/app.jar
 
 # Install Python and Redis
 RUN apt-get update && \
@@ -29,5 +29,5 @@ RUN apt-get update && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Set the entry point to run the application
-ENTRYPOINT ["java","-jar","/app.jar"]
+ENTRYPOINT ["java","-jar","/app/app.jar"]
 EXPOSE 8080/tcp

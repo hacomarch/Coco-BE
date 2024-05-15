@@ -3,15 +3,24 @@ FROM openjdk:17-slim as build
 
 WORKDIR /app
 
-# Copy project files to the working directory
-COPY . .
+# Copy Gradle wrapper and settings files
+COPY gradlew gradlew
+COPY gradle gradle
+COPY build.gradle build.gradle
+COPY settings.gradle settings.gradle
 
 # Configure proxy for Gradle
 RUN mkdir -p /root/.gradle && \
     echo "systemProp.http.proxyHost=krmp-proxy.9rum.cc\nsystemProp.http.proxyPort=3128\nsystemProp.https.proxyHost=krmp-proxy.9rum.cc\nsystemProp.https.proxyPort=3128" > /root/.gradle/gradle.properties
 
-# Make gradlew executable and build the project
-RUN chmod +x gradlew && ./gradlew build -x test
+# Download dependencies
+RUN chmod +x gradlew && ./gradlew build -x test --parallel --continue --build-cache || return 0
+
+# Copy the rest of the project files
+COPY . .
+
+# Build the project
+RUN ./gradlew build -x test
 
 # List the build output to verify
 RUN ls /app/build/libs/

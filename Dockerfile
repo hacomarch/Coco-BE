@@ -3,24 +3,15 @@ FROM openjdk:17-slim as build
 
 WORKDIR /app
 
-# Copy Gradle wrapper and settings files
-COPY gradlew gradlew
-COPY gradle gradle
-COPY build.gradle build.gradle
-COPY settings.gradle settings.gradle
+# Copy project files to the working directory
+COPY . .
 
 # Configure proxy for Gradle
 RUN mkdir -p /root/.gradle && \
     echo "systemProp.http.proxyHost=krmp-proxy.9rum.cc\nsystemProp.http.proxyPort=3128\nsystemProp.https.proxyHost=krmp-proxy.9rum.cc\nsystemProp.https.proxyPort=3128" > /root/.gradle/gradle.properties
 
-# Download dependencies
-RUN chmod +x gradlew && ./gradlew build -x test --parallel --continue --build-cache || return 0
-
-# Copy the rest of the project files
-COPY . .
-
-# Build the project
-RUN ./gradlew build -x test
+# Make gradlew executable and build the project
+RUN chmod +x gradlew && ./gradlew build -x test
 
 # List the build output to verify
 RUN ls /app/build/libs/
@@ -30,7 +21,7 @@ FROM openjdk:17-slim
 VOLUME /tmp
 
 # Copy the built JAR file from the build stage
-COPY --from=build /app/build/libs/*.jar /app/app.jar
+COPY --from=build /app/build/libs/*.jar /app/
 
 # Install Python and Redis
 RUN apt-get update && \
@@ -38,5 +29,5 @@ RUN apt-get update && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Set the entry point to run the application
-ENTRYPOINT ["java","-jar","/app/app.jar"]
+ENTRYPOINT ["java","-jar","/app/*.jar"]
 EXPOSE 8080/tcp

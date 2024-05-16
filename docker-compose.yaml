@@ -1,9 +1,0 @@
-version: '3.8'
-
-services:
-  ide:
-    build: .
-    volumes:
-      - ./filedb:/app/filedb
-    ports:
-      - "8080:8080"

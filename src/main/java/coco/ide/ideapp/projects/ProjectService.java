@@ -40,7 +40,7 @@ public class ProjectService {
         Project savedProject = projectRepository.save(project);
 
         //프로젝트 생성 시 filedb 밑에 폴더 생성
-        String dirPath = "/app/filedb/" + savedProject.getMember().getMemberId() + "/" + savedProject.getProjectId();
+        String dirPath = "filedb/" + savedProject.getMember().getMemberId() + "/" + savedProject.getProjectId();
         File directory = new File(dirPath);
         if (!directory.exists()) {
             boolean created = directory.mkdirs();

@@ -29,13 +29,13 @@ public class SecurityConfig {
     // 아래 코드는 개발용
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.cors(cors -> cors.configurationSource(corsConfigurationSource)); //cors 수정
-        http.authorizeHttpRequests(authz -> authz
-                        .anyRequest().permitAll()  // 모든 요청에 대해 접근 허용
+        http.cors(cors -> cors.configurationSource(corsConfigurationSource))
+                .authorizeHttpRequests(authz -> authz
+                        .anyRequest().permitAll()
                 )
-                .csrf(AbstractHttpConfigurer::disable)  // CSRF 보호 비활성화
+                .csrf(csrf -> csrf.disable())
                 .headers(headers -> headers
-                        .addHeaderWriter(new StaticHeadersWriter("X-Frame-Options", "DENY")));  // frame 옵션 비활성화
+                        .addHeaderWriter(new StaticHeadersWriter("X-Frame-Options", "DENY")));
 
         return http.build();
     }

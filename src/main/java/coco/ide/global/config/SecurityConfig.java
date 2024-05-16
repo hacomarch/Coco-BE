@@ -25,11 +25,11 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final CorsConfig corsConfig;
+    private final CorsConfigurationSource corsConfigurationSource;
     // 아래 코드는 개발용
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.cors(cors -> cors.configurationSource(corsConfig.corsConfigurationSource())); //cors 수정
+        http.cors(cors -> cors.configurationSource(corsConfigurationSource)); //cors 수정
         http.authorizeHttpRequests(authz -> authz
                         .anyRequest().permitAll()  // 모든 요청에 대해 접근 허용
                 )

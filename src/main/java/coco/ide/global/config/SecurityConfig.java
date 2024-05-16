@@ -1,5 +1,6 @@
 package coco.ide.global.config;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -14,18 +15,22 @@ import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.header.writers.StaticHeadersWriter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 import static org.springframework.security.config.Customizer.withDefaults;
 
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final CorsConfig corsConfig;
     // 아래 코드는 개발용
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-                .authorizeHttpRequests(authz -> authz
+        http.cors(cors -> cors.configurationSource(corsConfig.corsConfigurationSource())); //cors 수정
+        http.authorizeHttpRequests(authz -> authz
                         .anyRequest().permitAll()  // 모든 요청에 대해 접근 허용
                 )
                 .csrf(AbstractHttpConfigurer::disable)  // CSRF 보호 비활성화

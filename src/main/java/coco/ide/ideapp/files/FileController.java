@@ -78,4 +78,9 @@ public class FileController {
         String filePath = projectId + "/" + folderId + "/";
         codeExecuteService.runJavaProgram(filePath, fileId, request.getCommand(), session);
     }
+
+    @GetMapping("/{fileId}")
+    public String getFileContent(@PathVariable Long fileId) {
+        return fileService.getFileContent(fileId);
+    }
 }

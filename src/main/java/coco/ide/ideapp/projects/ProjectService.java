@@ -28,7 +28,7 @@ public class ProjectService {
     private final MemberRepository memberRepository;
 
     @Transactional
-    public void createProject(CreateProjectForm form) {
+    public Long createProject(CreateProjectForm form) {
         Project project = Project.builder()
                 .name(form.getName())
                 .language(form.getLanguage())
@@ -45,6 +45,7 @@ public class ProjectService {
         if (!directory.exists()) {
             boolean created = directory.mkdirs();
         }
+        return savedProject.getProjectId();
     }
 
     @Transactional

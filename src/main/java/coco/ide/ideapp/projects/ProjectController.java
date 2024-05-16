@@ -23,14 +23,14 @@ public class ProjectController {
     private final ValidationService validationService;
 
     @PostMapping()
-    public String createProject(@RequestBody CreateProjectForm form) {
+    public Long createProject(@RequestBody CreateProjectForm form) {
         log.info("createProjectForm = {}", form);
         boolean isValid = validationService.isValidFolderProjectName(form.getName());
         if (isValid) {
-            projectService.createProject(form);
-            return "create project ok";
+            return projectService.createProject(form);
         }
-        return "project name is not valid";
+        //올바르지 않은 프로젝트 명
+        return -1L;
     }
 
     @DeleteMapping("/{projectId}")

@@ -87,6 +87,7 @@ public class ProjectService {
         return new ProjectDto(project.getProjectId(), project.getName(), project.getLanguage());
     }
 
+    //Todo: memberId에 맞는 프로젝트들 가져와야함
     public List<ProjectListDto> findAllProjects() {
          return projectRepository.findAll()
                  .stream()

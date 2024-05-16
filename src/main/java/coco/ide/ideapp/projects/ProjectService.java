@@ -44,6 +44,7 @@ public class ProjectService {
         File directory = new File(dirPath);
         if (!directory.exists()) {
             boolean created = directory.mkdirs();
+            log.info("created ={}", created);
         }
         return savedProject.getProjectId();
     }

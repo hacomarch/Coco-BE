@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -182,6 +183,17 @@ public class FileService {
             writer.write(newContent); // 새로운 코드로 파일을 덮어씁니다.
         } catch (IOException e) {
             throw new RuntimeException("파일 쓰기 중 오류가 발생했습니다.", e);
+        }
+    }
+
+    public String getFileContent(Long fileId) {
+        String filePath = fileRepository.findById(fileId)
+                .orElseThrow(() -> new RuntimeException("존재하지 않는 파일")).getPath();
+
+        try {
+            return new String(Files.readAllBytes(Paths.get(filePath)));
+        } catch (IOException e) {
+            return e.getMessage();
         }
     }
 }

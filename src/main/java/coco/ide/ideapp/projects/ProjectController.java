@@ -57,7 +57,6 @@ public class ProjectController {
         return ResponseEntity.ok(allProjects);
     }
 
-    //Todo : 프로젝트 로드 시 최상위 파일들도 불러와야 함. Dto 수정 필요 -> 수정 끝 확인필요
     @GetMapping("/{projectId}")
     public ResponseEntity<ProjectChildsDto> findFolders(@PathVariable Long projectId) {
         ProjectChildsDto childs = projectService.findChilds(projectId);

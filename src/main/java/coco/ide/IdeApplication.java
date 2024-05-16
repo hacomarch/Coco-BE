@@ -19,7 +19,7 @@ public class IdeApplication {
 			@Override
 			public void addCorsMappings(CorsRegistry registry) {
 				//Todo: cors설정 시 프론트 포트로 allowedOrigins 바꿔주면 됨
-				registry.addMapping("/**").allowedOrigins("http://localhost:8080");
+				registry.addMapping("/**").allowedOrigins("http://localhost:8080", "http://localhost:3000");
 			}
 		};
 	}

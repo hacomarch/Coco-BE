@@ -181,6 +181,7 @@ public class FileService {
 
         try (FileWriter writer = new FileWriter(codeFile, false)) { // false to overwrite.
             writer.write(newContent); // 새로운 코드로 파일을 덮어씁니다.
+            log.info("new Content = {}", newContent);
         } catch (IOException e) {
             throw new RuntimeException("파일 쓰기 중 오류가 발생했습니다.", e);
         }

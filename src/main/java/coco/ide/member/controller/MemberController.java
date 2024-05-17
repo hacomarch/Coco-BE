@@ -75,6 +75,25 @@ public class MemberController {
     }
 
     // 회원정보 수정 전 비밀번호 확인
+//    @PostMapping("/verify-password")
+//    public ResponseEntity<SingleResponseDto<String>> verifyPassword(@RequestBody VerifyPasswordDto verifyPasswordDto, HttpServletRequest request) {
+//        HttpSession session = request.getSession(false);
+//        if (session != null) {
+//            Long memberId = (Long) session.getAttribute("memberId");
+//            if (memberId != null) {
+//                boolean isVerified = memberService.verifyPassword(memberId, verifyPasswordDto.getPassword());
+//                if (isVerified) {
+//                    return ResponseEntity.ok(new SingleResponseDto<>("Password verified successfully"));
+//                } else {
+//                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+//                            .body(new SingleResponseDto<>("Incorrect password"));
+//                }
+//            }
+//        }
+//        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+//                .body(new SingleResponseDto<>("User not authenticated"));
+//    }
+
     @PostMapping("/verify-password")
     public ResponseEntity<SingleResponseDto<String>> verifyPassword(@RequestBody VerifyPasswordDto verifyPasswordDto, HttpServletRequest request) {
         HttpSession session = request.getSession(false);
@@ -88,7 +107,11 @@ public class MemberController {
                     return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                             .body(new SingleResponseDto<>("Incorrect password"));
                 }
+            } else {
+                log.info("memberId is null");
             }
+        } else {
+            log.info("Session is null");
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(new SingleResponseDto<>("User not authenticated"));

@@ -5,11 +5,13 @@ import coco.ide.ideapp.files.requestdto.*;
 import coco.ide.ideapp.files.run.CodeExecuteService;
 import coco.ide.ideapp.files.run.JavaExecutionWebSocketHandler;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/projects/{projectId}/folders/{folderId}/files")
@@ -65,6 +67,7 @@ public class FileController {
 
     @PatchMapping("/{fileId}/content")
     public String updateFileContent(@PathVariable Long fileId, @RequestBody UpdateFileContentForm form) {
+        log.info("file content = {}", form.getCode());
         fileService.updateFileContent(fileId, form.getCode());
         return "수정 성공";
     }

@@ -43,7 +43,7 @@ public class SecurityConfig {
     @Bean
     public UrlBasedCorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.addAllowedOrigin("http://localhost:3000"); // 모든 도메인 허용
+        configuration.addAllowedOrigin("localhost:3000"); // 모든 도메인 허용
         configuration.addAllowedOrigin("https://kf0fe260a297da.user-app.krampoline.com");
         configuration.addAllowedMethod("*"); // 모든 HTTP 메서드 허용
         configuration.addAllowedHeader("*"); // 모든 헤더 허용

@@ -19,10 +19,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer, WebSoc
    public void registerStompEndpoints(StompEndpointRegistry registry){
        registry.addEndpoint("/ws")         // stomp 통신
                .setAllowedOrigins("3000")
-//                .setAllowedOrigins("http://localhost:8080",
-//                        "http://localhost:3000",
-//                        "https://k40d5114c4212a.user-app.krampoline.com",
-//                        "https://k100f7af4f18ea.user-app.krampoline.com")
+                .setAllowedOrigins("http://localhost:8080",
+                        "http://localhost:3000",
+                        "https://kd8514eb63fc1a.user-app.krampoline.com")
                .withSockJS();
    }
     @Override

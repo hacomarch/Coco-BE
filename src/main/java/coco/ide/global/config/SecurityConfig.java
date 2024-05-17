@@ -1,5 +1,6 @@
 package coco.ide.global.config;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -23,23 +24,29 @@ import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
     // 아래 코드는 개발용
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+<<<<<<< HEAD
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource())) // CORS 설정 추가
+=======
+        http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
+>>>>>>> 4fe26c3f6e6cdefd9856be0785a273a5ed32a056
                 .authorizeHttpRequests(authz -> authz
-                        .anyRequest().permitAll()  // 모든 요청에 대해 접근 허용
+                        .anyRequest().permitAll()
                 )
-                .csrf(AbstractHttpConfigurer::disable)  // CSRF 보호 비활성화
+                .csrf(csrf -> csrf.disable())
                 .headers(headers -> headers
-                        .addHeaderWriter(new StaticHeadersWriter("X-Frame-Options", "DENY")));  // frame 옵션 비활성화
+                        .addHeaderWriter(new StaticHeadersWriter("X-Frame-Options", "DENY")));
 
         return http.build();
     }
 
     @Bean
+<<<<<<< HEAD
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.addAllowedOrigin("http://localhost:3000"); // 클라이언트 출처 추가
@@ -47,6 +54,15 @@ public class SecurityConfig {
         configuration.addAllowedMethod("*"); // 모든 HTTP 메서드 허용
         configuration.addAllowedHeader("*"); // 모든 헤더 허용
         configuration.setAllowCredentials(true); // 자격 증명 허용
+=======
+    public UrlBasedCorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.addAllowedOrigin("http://localhost:3000");
+        configuration.addAllowedMethod("*"); // 모든 HTTP 메서드 허용
+        configuration.addAllowedHeader("*"); // 모든 헤더 허용
+        configuration.setAllowCredentials(true); // 자격 증명 허용
+
+>>>>>>> 4fe26c3f6e6cdefd9856be0785a273a5ed32a056
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;

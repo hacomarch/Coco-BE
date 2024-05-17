@@ -24,6 +24,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer, WebSoc
                         "https://kd8514eb63fc1a.user-app.krampoline.com")
                .withSockJS();
    }
+
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         registry.enableSimpleBroker("/topic");    // 구독하는 사용자들에게 메시지 전달

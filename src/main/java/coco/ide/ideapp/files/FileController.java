@@ -75,7 +75,8 @@ public class FileController {
                            @PathVariable Long fileId,
                            @RequestBody CommandRequest request) throws IOException {
         WebSocketSession session = JavaExecutionWebSocketHandler.getSessionById(request.getSessionId());
-        String filePath = projectId + "/" + folderId + "/";
+        Long memberId = fileService.getMemberId(projectId);
+        String filePath = memberId + "/" + projectId + "/" + folderId + "/";
         codeExecuteService.runJavaProgram(filePath, fileId, request.getCommand(), session);
     }
 

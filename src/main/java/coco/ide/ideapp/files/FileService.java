@@ -196,4 +196,9 @@ public class FileService {
             return e.getMessage();
         }
     }
+
+    public Long getMemberId(Long projectId) {
+        return projectRepository.findById(projectId)
+                .orElseThrow(() -> new RuntimeException("존재하지 않는 프로젝트")).getMember().getMemberId();
+    }
 }

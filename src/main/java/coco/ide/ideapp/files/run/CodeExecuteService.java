@@ -23,7 +23,7 @@ public class CodeExecuteService {
     private final FileRepository fileRepository;
 
     public void runJavaProgram(String filePath, Long fileId, String command, WebSocketSession session) throws IOException {
-        String absolutePath = "/Users/haeun/Desktop/goormton/IDE/Coco-BE/filedb/";
+        String absolutePath = "~/filedb/";
         String newFilePath = absolutePath + filePath;
 
         File file = fileRepository.findById(fileId)

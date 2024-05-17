@@ -1,4 +1,4 @@
-package coco.ide.global.common;
+package coco.ide.global.common.dto;
 
 import lombok.Getter;
 import lombok.Setter;

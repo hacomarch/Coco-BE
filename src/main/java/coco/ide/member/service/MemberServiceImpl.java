@@ -1,6 +1,8 @@
 package coco.ide.member.service;
 
-import coco.ide.global.common.*;
+import coco.ide.global.common.exception.BusinessLogicException;
+import coco.ide.global.common.exception.ExceptionCode;
+import coco.ide.global.common.service.RedisService;
 import coco.ide.member.domain.Member;
 import coco.ide.member.dto.*;
 import coco.ide.member.repository.MemberRepository;
@@ -126,4 +128,5 @@ public class MemberServiceImpl implements MemberService {
         Member updatedMember = memberRepository.save(member); // 회원 정보 저장
         return new MemberDto(updatedMember.getMemberId(), updatedMember.getEmail(), updatedMember.getNickname());
     }
+
 }

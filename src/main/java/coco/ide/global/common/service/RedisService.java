@@ -1,4 +1,4 @@
-package coco.ide.global.common;
+package coco.ide.global.common.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

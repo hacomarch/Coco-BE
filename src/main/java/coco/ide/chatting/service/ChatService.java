@@ -40,6 +40,8 @@ public class ChatService {
             ResponseChatDto responseChatDto = ResponseChatDto.builder()
                     .message(message.getMessage())
                     .memberId(message.getMember().getMemberId())
+                    .nickname(message.getMember().getNickname())
+                    .isDeleted(message.getIsDeleted())
                     .createdAt(message.getCreatedAt())
                     .build();
 
@@ -64,6 +66,8 @@ public class ChatService {
         ResponseChatDto responseChatDto = ResponseChatDto.builder()
                 .message(requestChatDto.getMessage())
                 .memberId(memberId)
+                .nickname(member.getNickname())
+                .isDeleted(false)
                 .createdAt(LocalDateTime.now())
                 .build();
 
@@ -89,6 +93,8 @@ public class ChatService {
                     .message(c.getMessage())
                     .isDeleted(c.getIsDeleted())
                     .memberId(c.getMember().getMemberId())
+                    .nickname(c.getMember().getNickname())
+                    .isDeleted(c.getIsDeleted())
                     .build();
 
             wordContainList.add(responseChatDto);

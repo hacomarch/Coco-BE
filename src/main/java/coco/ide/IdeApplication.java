@@ -17,7 +17,11 @@ public class IdeApplication {
 		return new WebMvcConfigurer() {
 			@Override
 			public void addCorsMappings(CorsRegistry registry) {
-				registry.addMapping("/**").allowedOrigins("http://localhost:3000");
+				registry.addMapping("/**")
+						.allowedOrigins("http://localhost:3000", "https://kf0fe260a297da.user-app.krampoline.com")
+						.allowedMethods("*")
+						.allowedHeaders("*")
+						.allowCredentials(true);
 			}
 		};
 	}

@@ -33,6 +33,14 @@ public class MemberServiceImpl implements MemberService {
     @Value("${spring.mail.auth-code-expiration-millis}")
     private long authCodeExpirationMillis;
 
+    // Id로 Member 가져오기
+    @Override
+    public MemberDto getMemberById(Long memberId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new BusinessLogicException(ExceptionCode.MEMBER_NOT_FOUND));
+        return new MemberDto(member.getMemberId(), member.getEmail(), member.getNickname());
+    }
+
     // 회원 저장
     @Override
     public MemberDto saveMember(MemberRegistrationDto memberDto) {
@@ -55,6 +63,14 @@ public class MemberServiceImpl implements MemberService {
         throw new BusinessLogicException(ExceptionCode.UNAUTHORIZED);
     }
 
+    // 이메일 중복 체크
+    private void checkDuplicatedEmail(String email) {
+        if (memberRepository.findByEmail(email).isPresent()) {
+            log.debug("MemberServiceImpl.checkDuplicatedEmail exception occur email: {}", email);
+            throw new BusinessLogicException(ExceptionCode.MEMBER_EXISTS);
+        }
+    }
+
     // 이메일로 인증 코드 전송
     @Override
     public void sendCodeToEmail(String toEmail) {
@@ -74,15 +90,6 @@ public class MemberServiceImpl implements MemberService {
         );
         mailService.sendEmail(toEmail, title, text);
         redisService.setValues(AUTH_CODE_PREFIX + toEmail, authCode, Duration.ofMillis(authCodeExpirationMillis));
-    }
-
-
-    // 이메일 중복 체크
-    private void checkDuplicatedEmail(String email) {
-        if (memberRepository.findByEmail(email).isPresent()) {
-            log.debug("MemberServiceImpl.checkDuplicatedEmail exception occur email: {}", email);
-            throw new BusinessLogicException(ExceptionCode.MEMBER_EXISTS);
-        }
     }
 
     // 인증 코드 생성
@@ -110,23 +117,35 @@ public class MemberServiceImpl implements MemberService {
         return EmailVerificationResult.of(authResult);
     }
 
-    // 회원 정보 업데이트
+    // 회원 정보 수정 전 비밀번호 확인
+    @Override
+    public boolean verifyPassword(Long memberId, String password) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new BusinessLogicException(ExceptionCode.MEMBER_NOT_FOUND));
+
+        return passwordEncoder.matches(password, member.getPassword());
+    }
+
+    // 회원 정보 수정
     @Override
     public MemberDto updateMemberProfile(Long memberId, MemberUpdateDto updateDto) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new BusinessLogicException(ExceptionCode.MEMBER_NOT_FOUND));
 
-        // 닉네임 업데이트
+        // 닉네임 수정
         if (updateDto.getNickname() != null && !updateDto.getNickname().isEmpty()) {
             member.setNickname(updateDto.getNickname());
         }
-        // 비밀번호 업데이트
+        // 비밀번호 수정
         if (updateDto.getPassword() != null && !updateDto.getPassword().isEmpty()) {
             String hashedPassword = passwordEncoder.encode(updateDto.getPassword());
             member.setPassword(hashedPassword);
         }
-        Member updatedMember = memberRepository.save(member); // 회원 정보 저장
+        // 수정된 회원 정보 저장
+        Member updatedMember = memberRepository.save(member);
         return new MemberDto(updatedMember.getMemberId(), updatedMember.getEmail(), updatedMember.getNickname());
     }
+
+
 
 }

@@ -29,7 +29,7 @@ public class Chat {
     private Member member;
 
     @Column(name = "is_deleted")
-    private Boolean isDeleted = false;;
+    private Boolean isDeleted;;
 
     @Column
     private LocalDateTime createdAt;

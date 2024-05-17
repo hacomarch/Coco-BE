@@ -29,7 +29,12 @@ public class SecurityConfig {
     // 아래 코드는 개발용
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+<<<<<<< HEAD
+        http
+                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // CORS 설정 추가
+=======
         http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
+>>>>>>> 4fe26c3f6e6cdefd9856be0785a273a5ed32a056
                 .authorizeHttpRequests(authz -> authz
                         .anyRequest().permitAll()
                 )
@@ -41,6 +46,15 @@ public class SecurityConfig {
     }
 
     @Bean
+<<<<<<< HEAD
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.addAllowedOrigin("http://localhost:3000"); // 클라이언트 출처 추가
+        configuration.addAllowedOrigin("https://kd8514eb63fc1a.user-app.krampoline.com"); // 클라이언트 출처 추가
+        configuration.addAllowedMethod("*"); // 모든 HTTP 메서드 허용
+        configuration.addAllowedHeader("*"); // 모든 헤더 허용
+        configuration.setAllowCredentials(true); // 자격 증명 허용
+=======
     public UrlBasedCorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.addAllowedOrigin("http://localhost:3000");
@@ -48,6 +62,7 @@ public class SecurityConfig {
         configuration.addAllowedHeader("*"); // 모든 헤더 허용
         configuration.setAllowCredentials(true); // 자격 증명 허용
 
+>>>>>>> 4fe26c3f6e6cdefd9856be0785a273a5ed32a056
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;

@@ -1,4 +1,4 @@
-package coco.ide.global.common;
+package coco.ide.global.common.exception;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;

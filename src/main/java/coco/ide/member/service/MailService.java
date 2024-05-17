@@ -1,7 +1,7 @@
 package coco.ide.member.service;
 
-import coco.ide.global.common.BusinessLogicException;
-import coco.ide.global.common.ExceptionCode;
+import coco.ide.global.common.exception.BusinessLogicException;
+import coco.ide.global.common.exception.ExceptionCode;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

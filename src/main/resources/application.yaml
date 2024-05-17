@@ -26,8 +26,14 @@ spring:
           connectiontimeout: 5000
           timeout: 5000
           writetimeout: 5000
-    auth-code-expiration-millis: 1800000
+    auth-code-expiration-millis: 600000
     
   redis:
     host: localhost
     port: 6379
+    password: ${REDIS_PASSWORD}
+
+  server:
+    servlet:
+      session:
+        timeout: 30m

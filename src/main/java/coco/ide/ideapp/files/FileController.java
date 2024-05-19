@@ -72,20 +72,23 @@ public class FileController {
         return "수정 성공";
     }
 
-    @PostMapping("/{fileId}")
+    @GetMapping("/{fileId}/run")
     public String runCommand(@PathVariable Long projectId,
                            @PathVariable Long folderId,
                            @PathVariable Long fileId) throws IOException {
 
+        log.info("projectId " + projectId + "folderId " + folderId + "fileId " + fileId);
         Long memberId = fileService.getMemberId(projectId);
         String language = projectService.getLanguage(projectId);
         String filePath;
         if (folderId != null) {
-            filePath = "~/filedb/" + memberId + "/" + projectId + "/" + folderId + "/";
+            filePath = "filedb/" + memberId + "/" + projectId + "/" + folderId + "/";
         } else {
-            filePath = "~/filedb/" + memberId + "/" + projectId + "/";
+            filePath = "filedb/" + memberId + "/" + projectId + "/";
         }
 
+        log.info("memberId = " + memberId + "language = " + language);
+        log.info("filePath = " + filePath);
         return executeService.executeCode(filePath, language, fileId);
     }
 

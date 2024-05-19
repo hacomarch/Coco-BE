@@ -13,7 +13,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
    public void registerStompEndpoints(StompEndpointRegistry registry){
        registry.addEndpoint("/ws")         // stomp 통신
                .setAllowedOrigins("3000")
-                .setAllowedOrigins("http://localhost:3000")
+                .setAllowedOrigins("http://localhost:3000", "http://ec2-3-25-61-114.ap-southeast-2.compute.amazonaws.com")
                .withSockJS();
    }
 

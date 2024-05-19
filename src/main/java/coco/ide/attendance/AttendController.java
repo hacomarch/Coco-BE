@@ -17,12 +17,9 @@ public class AttendController {
 
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("/api/attend")
-    public List<ResponseAttendDto> allAttends(@RequestBody RequestAttendDto requestAttendDto) {
-        List<ResponseAttendDto> attendList = attendService.allAttends(requestAttendDto);
-
-//        log.info("attendList : {}", attendList);
-
-        return attendList;
+    public List<ResponseAttendDto> allAttends(@RequestParam(name = "memberId") Long memberId) {
+//        log.info("controller, memberId: {}", memberId);
+        return attendService.allAttends(memberId);
     }
 
     @ResponseStatus(HttpStatus.CREATED)

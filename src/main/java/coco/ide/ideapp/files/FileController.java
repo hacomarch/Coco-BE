@@ -2,8 +2,7 @@ package coco.ide.ideapp.files;
 
 import coco.ide.ideapp.ValidationService;
 import coco.ide.ideapp.files.requestdto.*;
-import coco.ide.ideapp.files.run.CodeExecuteService;
-import coco.ide.ideapp.files.run.JavaExecutionWebSocketHandler;
+import coco.ide.ideapp.projects.ProjectService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -19,8 +18,9 @@ import java.io.IOException;
 public class FileController {
 
     private final FileService fileService;
-    private final CodeExecuteService codeExecuteService;
     private final ValidationService validationService;
+    private final ExecuteService executeService;
+    private final ProjectService projectService;
 
     @PostMapping
     public String createFile(@PathVariable Long projectId,
@@ -73,14 +73,20 @@ public class FileController {
     }
 
     @PostMapping("/{fileId}")
-    public void runCommand(@PathVariable Long projectId,
+    public String runCommand(@PathVariable Long projectId,
                            @PathVariable Long folderId,
-                           @PathVariable Long fileId,
-                           @RequestBody CommandRequest request) throws IOException {
-        WebSocketSession session = JavaExecutionWebSocketHandler.getSessionById(request.getSessionId());
+                           @PathVariable Long fileId) throws IOException {
+
         Long memberId = fileService.getMemberId(projectId);
-        String filePath = memberId + "/" + projectId + "/" + folderId + "/";
-        codeExecuteService.runJavaProgram(filePath, fileId, request.getCommand(), session);
+        String language = projectService.getLanguage(projectId);
+        String filePath;
+        if (folderId != null) {
+            filePath = "~/filedb/" + memberId + "/" + projectId + "/" + folderId + "/";
+        } else {
+            filePath = "~/filedb/" + memberId + "/" + projectId + "/";
+        }
+
+        return executeService.executeCode(filePath, language, fileId);
     }
 
     @GetMapping("/{fileId}")

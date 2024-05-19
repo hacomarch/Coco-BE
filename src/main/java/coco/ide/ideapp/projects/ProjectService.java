@@ -113,4 +113,11 @@ public class ProjectService {
         return new ProjectChildsDto(folderDtos, fileDtos);
 
     }
+
+    public String getLanguage(Long projectId) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new RuntimeException("project does not exist"));
+
+        return project.getLanguage();
+    }
 }

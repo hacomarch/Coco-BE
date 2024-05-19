@@ -34,12 +34,13 @@ public class ChatController {
         return ResponseEntity.ok("전체 유저에게 메시지 전송 완료!");
     }
 
+    // 모든 메시지 기록 가져오기
     @GetMapping("/messages")
     public List<ResponseChatDto> allMessages() {
         return chatService.allMessage();
     }
 
-
+    // 메시지 삭제 "isDeleted=true" 로 변경
     @ResponseStatus(HttpStatus.OK)
     @DeleteMapping("/{messageId}")
     public void deleteMessage(@PathVariable Long messageId) {

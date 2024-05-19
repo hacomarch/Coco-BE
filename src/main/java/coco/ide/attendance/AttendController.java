@@ -4,10 +4,9 @@ package coco.ide.attendance;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -16,8 +15,18 @@ public class AttendController {
 
     private final AttendService attendService;
 
+    @ResponseStatus(HttpStatus.OK)
+    @GetMapping("/api/attend")
+    public List<ResponseAttendDto> allAttends(@RequestBody RequestAttendDto requestAttendDto) {
+        List<ResponseAttendDto> attendList = attendService.allAttends(requestAttendDto);
+
+//        log.info("attendList : {}", attendList);
+
+        return attendList;
+    }
+
     @ResponseStatus(HttpStatus.CREATED)
-    @PostMapping("/attend")
+    @PostMapping("/api/attend")
     public void makeAttend(@RequestBody RequestAttendDto requestAttendDto) {
         log.info("memberId : {}", requestAttendDto.getMemberId());
 

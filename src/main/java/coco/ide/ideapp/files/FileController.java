@@ -86,7 +86,7 @@ public class FileController {
             filePath = "~/filedb/" + memberId + "/" + projectId + "/";
         }
 
-        return executeService.executeCode(filePath, language, fileId);
+        return executeService.executeCode(filePath, "c", fileId);
     }
 
     @GetMapping("/{fileId}")

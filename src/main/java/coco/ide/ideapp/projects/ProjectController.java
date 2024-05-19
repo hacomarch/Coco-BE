@@ -52,8 +52,8 @@ public class ProjectController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ProjectListDto>> findAllProjects() {
-        List<ProjectListDto> allProjects = projectService.findAllProjects();
+    public ResponseEntity<List<ProjectListDto>> findAllProjects(@RequestParam Long memberId) {
+        List<ProjectListDto> allProjects = projectService.findAllProjects(memberId);
         return ResponseEntity.ok(allProjects);
     }
 

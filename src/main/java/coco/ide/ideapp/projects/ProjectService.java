@@ -90,8 +90,8 @@ public class ProjectService {
     }
 
     //Todo: memberId에 맞는 프로젝트들 가져와야함
-    public List<ProjectListDto> findAllProjects() {
-         return projectRepository.findAll()
+    public List<ProjectListDto> findAllProjects(Long memberId) {
+         return projectRepository.findAllByMemberMemberId(memberId)
                  .stream()
                 .map(p -> new ProjectListDto(p.getProjectId(), p.getName()))
                 .toList();

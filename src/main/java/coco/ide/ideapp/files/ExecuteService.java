@@ -23,7 +23,6 @@ public class ExecuteService {
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 파일"));
         int dotIndex = file.getName().lastIndexOf('.');
 
-        String testPath = "/Users/seunghwan/Documents/coco_workspace/Coco-BE/filedb/1/2/";
         List<String> commandDocker = new ArrayList<>();
         if (language.equals("java")) {
             commandDocker = List.of(
@@ -56,7 +55,7 @@ public class ExecuteService {
             log.info("language = {}", language);
             commandDocker = List.of(
                     "docker", "run", "--rm", "-i",
-                    "-v", testPath + ":/user_files",
+                    "-v", filePath + ":/user_files",
                     "-w", "/user_files",
                     "gcc:latest",
                     "sh", "-c", "gcc " + file.getName() + " -o program && ./program && rm program"

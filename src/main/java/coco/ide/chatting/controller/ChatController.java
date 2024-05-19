@@ -42,8 +42,8 @@ public class ChatController {
 
     // 메시지 삭제 "isDeleted=true" 로 변경
     @ResponseStatus(HttpStatus.OK)
-    @DeleteMapping("/{messageId}")
-    public void deleteMessage(@PathVariable Long messageId) {
+    @DeleteMapping("/message")
+    public void deleteMessage(@RequestParam(name = "messageId") Long messageId) {
         chatService.deleteMessage(messageId);
     }
 

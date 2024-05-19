@@ -24,9 +24,9 @@ public class AttendService {
     private final MemberRepository memberRepository;
 
     // 출석도장 가져오기
-    public List<ResponseAttendDto> allAttends(RequestAttendDto requestAttendDto) {
-        Long memberId = requestAttendDto.getMemberId();
+    public List<ResponseAttendDto> allAttends(Long memberId) {
 
+//        log.info("memberId : {}", memberId);
         // 회원 ID로 회원 객체 조회
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("No member found with ID: " + memberId));
@@ -38,8 +38,6 @@ public class AttendService {
                 .map(Attend::getAttendDate)
                 .collect(Collectors.toList());
 
-        List<ResponseAttendDto> attendList = new ArrayList<>();
-
         ResponseAttendDto responseAttendDto = ResponseAttendDto.builder()
                 .memberId(member.getMemberId())
                 .attendDate(attendDates)
@@ -47,7 +45,6 @@ public class AttendService {
 
         return Collections.singletonList(responseAttendDto);
     }
-
 
     // 출석도장 찍기
     public void makeAttendStamp(RequestAttendDto requestAttendDto) {

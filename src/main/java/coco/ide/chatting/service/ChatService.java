@@ -38,6 +38,7 @@ public class ChatService {
 
         for (Chat message : allMessageList) {
             ResponseChatDto responseChatDto = ResponseChatDto.builder()
+                    .chatId(message.getChatId())
                     .message(message.getMessage())
                     .memberId(message.getMember().getMemberId())
                     .nickname(message.getMember().getNickname())

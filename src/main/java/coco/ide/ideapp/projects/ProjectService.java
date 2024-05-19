@@ -28,7 +28,7 @@ public class ProjectService {
     private final MemberRepository memberRepository;
 
     @Transactional
-    public Long createProject(CreateProjectForm form) {
+    public ProjectDto createProject(CreateProjectForm form) {
         Project project = Project.builder()
                 .name(form.getName())
                 .language(form.getLanguage())
@@ -46,7 +46,7 @@ public class ProjectService {
             boolean created = directory.mkdirs();
             log.info("created ={}", created);
         }
-        return savedProject.getProjectId();
+        return new ProjectDto(savedProject.getProjectId(), savedProject.getName(), savedProject.getLanguage());
     }
 
     @Transactional

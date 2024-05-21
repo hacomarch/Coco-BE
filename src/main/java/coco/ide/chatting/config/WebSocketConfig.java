@@ -1,5 +1,6 @@
 package coco.ide.chatting.config;
 
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.*;
@@ -13,7 +14,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
    public void registerStompEndpoints(StompEndpointRegistry registry){
        registry.addEndpoint("/ws")         // stomp 통신
                .setAllowedOrigins("3000")
-                .setAllowedOrigins("http://localhost:3000", "http://ec2-3-25-61-114.ap-southeast-2.compute.amazonaws.com")
+                .setAllowedOrigins("http://localhost:3000", "http://ec2-3-25-61-114.ap-southeast-2.compute.amazonaws.com", "http://ec2-13-125-221-158.ap-northeast-2.compute.amazonaws.com/", "http://ec2-3-27-138-7.ap-southeast-2.compute.amazonaws.com", "http://ec2-54-79-146-246.ap-southeast-2.compute.amazonaws.com")
                .withSockJS();
    }
 

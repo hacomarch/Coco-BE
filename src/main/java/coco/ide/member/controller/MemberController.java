@@ -120,16 +120,17 @@ public class MemberController {
 
     // 회원정보 수정
     @PutMapping("/profile")
-    public ResponseEntity<MemberDto> updateProfile(@RequestBody @Valid MemberUpdateDto updateDto, HttpServletRequest request) {
-        HttpSession session = request.getSession(false);
-        if (session != null) {
-            Long memberId = (Long) session.getAttribute("memberId");
-            if (memberId != null) {
-                MemberDto updateMember = memberService.updateMemberProfile(memberId, updateDto);
-                return ResponseEntity.ok(updateMember);
-            }
-        }
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    public ResponseEntity<MemberDto> updateProfile(@RequestBody MemberUpdateDto updateDto) {
+//        HttpSession session = request.getSession(false);
+//        if (session != null) {
+//            Long memberId = (Long) session.getAttribute("memberId");
+//            if (memberId != null) {
+//                MemberDto updateMember = memberService.updateMemberProfile(memberId, updateDto);
+//                return ResponseEntity.ok(updateMember);
+//            }
+//        }
+        MemberDto memberDto = memberService.updateMemberProfile(updateDto);
+        return ResponseEntity.ok(memberDto);
     }
 
     // 마이 페이지

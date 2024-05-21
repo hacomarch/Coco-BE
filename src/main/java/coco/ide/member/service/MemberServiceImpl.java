@@ -128,21 +128,22 @@ public class MemberServiceImpl implements MemberService {
 
     // 회원 정보 수정
     @Override
-    public MemberDto updateMemberProfile(Long memberId, MemberUpdateDto updateDto) {
-        Member member = memberRepository.findById(memberId)
+    public MemberDto updateMemberProfile(MemberUpdateDto updateDto) {
+        Member member = memberRepository.findById(updateDto.getMemberId())
                 .orElseThrow(() -> new BusinessLogicException(ExceptionCode.MEMBER_NOT_FOUND));
 
         // 닉네임 수정
         if (updateDto.getNickname() != null && !updateDto.getNickname().isEmpty()) {
             member.setNickname(updateDto.getNickname());
         }
-        // 비밀번호 수정
-        if (updateDto.getPassword() != null && !updateDto.getPassword().isEmpty()) {
-            String hashedPassword = passwordEncoder.encode(updateDto.getPassword());
-            member.setPassword(hashedPassword);
-        }
-        // 수정된 회원 정보 저장
+//        // 비밀번호 수정
+//        if (updateDto.getPassword() != null && !updateDto.getPassword().isEmpty()) {
+//            String hashedPassword = passwordEncoder.encode(updateDto.getPassword());
+//            member.setPassword(hashedPassword);
+//        }
         Member updatedMember = memberRepository.save(member);
+
+        // 수정된 회원 정보 저장
         return new MemberDto(updatedMember.getMemberId(), updatedMember.getEmail(), updatedMember.getNickname());
     }
 

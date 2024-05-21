@@ -7,12 +7,14 @@ import lombok.Setter;
 public class MemberUpdateDto {
     private String nickname;
     private String password;
+    private Long memberId;
 
     public MemberUpdateDto() {}
 
-    public MemberUpdateDto(String nickname, String password) {
+    public MemberUpdateDto(String nickname, String password, Long memberId) {
         this.nickname = nickname;
         this.password = password;
+        this.memberId = memberId;
     }
 
 }

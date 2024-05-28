@@ -16,6 +16,8 @@ WebIDE는 사용자가 웹 브라우저에서 코드 작성, 실행 및 프로�
 ## 팀원
 김선희, 윤하은, 이소은, 천승환
 
+<br>
+
 ## 사용 스택
 
 <img src="https://img.shields.io/badge/SpringBoot-6DB33F?style=for-the-badge&logo=SpringBoot&logoColor=white"> <img src="https://img.shields.io/badge/SpringSecurity-6DB33F?style=for-the-badge&logo=SpringSecurity&logoColor=white"> <img src="https://img.shields.io/badge/JPA-6DB33F?style=for-the-badge&logo=&logoColor=white">

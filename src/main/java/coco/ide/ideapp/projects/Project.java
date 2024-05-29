@@ -2,7 +2,7 @@ package coco.ide.ideapp.projects;
 
 import coco.ide.ideapp.files.File;
 import coco.ide.ideapp.folders.Folder;
-import coco.ide.member.domain.Member;
+import coco.ide.member.Member;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
@@ -16,7 +16,6 @@ import java.util.List;
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-//Todo : 최상위에 파일이 있을 수 있으니 file 필드도 추가해야 할 듯. 했으니 확인 필요
 public class Project {
     @Id @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "project_id")
@@ -33,10 +32,10 @@ public class Project {
     @JoinColumn(name = "member_id")
     private Member member;
 
-    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Folder> folders = new ArrayList<>();
 
-    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<File> files = new ArrayList<>();
 
     @Builder

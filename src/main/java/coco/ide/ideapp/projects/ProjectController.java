@@ -22,14 +22,12 @@ public class ProjectController {
     private final ProjectService projectService;
     private final ValidationService validationService;
 
-    @PostMapping()
+    @PostMapping
     public ProjectDto createProject(@RequestBody CreateProjectForm form) {
-        log.info("createProjectForm = {}", form);
         boolean isValid = validationService.isValidFolderProjectName(form.getName());
         if (isValid) {
             return projectService.createProject(form);
         }
-        //올바르지 않은 프로젝트 명
         return null;
     }
 
@@ -51,8 +49,8 @@ public class ProjectController {
         return ResponseEntity.ok(project);
     }
 
-    @GetMapping
-    public ResponseEntity<List<ProjectListDto>> findAllProjects(@RequestParam Long memberId) {
+    @GetMapping("/{memberId}/all")
+    public ResponseEntity<List<ProjectListDto>> findAllProjects(@PathVariable Long memberId) {
         List<ProjectListDto> allProjects = projectService.findAllProjects(memberId);
         return ResponseEntity.ok(allProjects);
     }

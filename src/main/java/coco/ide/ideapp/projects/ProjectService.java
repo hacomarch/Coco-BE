@@ -1,9 +1,11 @@
 package coco.ide.ideapp.projects;
 
+import coco.ide.ideapp.exception.ProjectNotFoundException;
+import coco.ide.ideapp.exception.UserNotFoundException;
 import coco.ide.ideapp.projects.requestdto.CreateProjectForm;
 import coco.ide.ideapp.projects.responsedto.*;
-import coco.ide.member.domain.Member;
-import coco.ide.member.repository.MemberRepository;
+import coco.ide.member.Member;
+import coco.ide.member.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,61 +29,83 @@ public class ProjectService {
     private final ProjectRepository projectRepository;
     private final MemberRepository memberRepository;
 
+    private static final String ABSOLUTE_PATH = "filedb/";
+
     @Transactional
     public ProjectDto createProject(CreateProjectForm form) {
-        Project project = Project.builder()
+        Project project = createNewProject(form);
+
+        Member member = getMember(form.getMemberId());
+        project.setMember(member);
+
+        Project savedProject = projectRepository.save(project);
+
+        createProjectDirectory(savedProject);
+
+        return new ProjectDto(savedProject.getProjectId(), savedProject.getName(), savedProject.getLanguage());
+    }
+
+    private Project createNewProject(CreateProjectForm form) {
+        return Project.builder()
                 .name(form.getName())
                 .language(form.getLanguage())
                 .build();
+    }
 
-        Member member = memberRepository.findById(form.getMemberId())
-                .orElseThrow(() -> new RuntimeException("존재하지 않는 멤버"));
-        project.setMember(member);
-        Project savedProject = projectRepository.save(project);
+    private Member getMember(Long memberId) {
+        return memberRepository.findById(memberId)
+                .orElseThrow(UserNotFoundException::new);
+    }
 
-        //프로젝트 생성 시 filedb 밑에 폴더 생성
-        String dirPath = "filedb/" + savedProject.getMember().getMemberId() + "/" + savedProject.getProjectId();
+    private void createProjectDirectory(Project project) {
+        String dirPath = ABSOLUTE_PATH + project.getMember().getMemberId() + "/" + project.getProjectId();
         File directory = new File(dirPath);
+
         if (!directory.exists()) {
-            boolean created = directory.mkdirs();
-            log.info("created ={}", created);
+            directory.mkdirs();
         }
-        return new ProjectDto(savedProject.getProjectId(), savedProject.getName(), savedProject.getLanguage());
     }
 
     @Transactional
     public void deleteProject(Long projectId) throws IllegalArgumentException {
-        if (!projectRepository.existsById(projectId)) {
-            throw new IllegalArgumentException("프로젝트 ID" + projectId + "는 존재하지 않습니다.");
-        }
+        Project project = getProjectById(projectId);
+        Long memberId = project.getMember().getMemberId();
 
-        Project findProject = projectRepository.findById(projectId).get();
-        Long memberId = findProject.getMember().getMemberId();
+        deleteProjectDirectory(memberId, projectId);
+        projectRepository.deleteById(projectId);
+    }
 
-        //멤버를 프로젝트 id로 땡겨오는걸로 바꾸기
-        String dirPath = "filedb/" + memberId + "/" + projectId;
+    private Project getProjectById(Long projectId) {
+        return projectRepository.findById(projectId)
+                .orElseThrow(ProjectNotFoundException::new);
+    }
+
+    private void deleteProjectDirectory(Long memberId, Long projectId) {
+        String dirPath = ABSOLUTE_PATH + memberId + "/" + projectId;
         Path directory = Paths.get(dirPath);
+
         try {
             Files.walk(directory)
                     .sorted(Comparator.reverseOrder())
-                    .forEach(path -> {
-                        try {
-                            Files.delete(path);
-                        } catch (IOException e) {
-                            System.err.println(e.getMessage());
-                        }
-                    });
-        } catch (IOException e) {
-            System.err.println(e.getMessage());
-        }
-        File project = new File(dirPath);
-        project.delete();
-        projectRepository.deleteById(projectId);
+                    .forEach(this::deletePath);
 
+            File projectDirectory = new File(dirPath);
+            projectDirectory.delete();
+        } catch (IOException e) {
+            log.error("Error walking through directory {}: {}", dirPath, e.getMessage());
+        }
+    }
+
+    private void deletePath(Path path) {
+        try {
+            Files.delete(path);
+        } catch (IOException e) {
+            log.error("Error deleting file {}:{}", path, e.getMessage());
+        }
     }
 
     @Transactional
-    public ProjectDto updateProjectName(Long projectId, String newName) throws IllegalArgumentException{
+    public ProjectDto updateProjectName(Long projectId, String newName) throws IllegalArgumentException {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new RuntimeException("project does not exist"));
 
@@ -89,10 +113,9 @@ public class ProjectService {
         return new ProjectDto(project.getProjectId(), project.getName(), project.getLanguage());
     }
 
-    //Todo: memberId에 맞는 프로젝트들 가져와야함
     public List<ProjectListDto> findAllProjects(Long memberId) {
-         return projectRepository.findAllByMemberMemberId(memberId)
-                 .stream()
+        return projectRepository.findAllByMemberMemberIdWithMember(memberId)
+                .stream()
                 .map(p -> new ProjectListDto(p.getProjectId(), p.getName()))
                 .toList();
     }
@@ -111,7 +134,6 @@ public class ProjectService {
                 .collect(Collectors.toList());
 
         return new ProjectChildsDto(folderDtos, fileDtos);
-
     }
 
     public String getLanguage(Long projectId) {

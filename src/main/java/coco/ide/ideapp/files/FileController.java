@@ -6,7 +6,6 @@ import coco.ide.ideapp.projects.ProjectService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
 

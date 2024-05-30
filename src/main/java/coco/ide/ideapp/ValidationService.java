@@ -4,7 +4,6 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class ValidationService {
-    // 파일 또는 폴더 이름 유효성 검사
     private static final String INVALID_CHARS = "[\\\\/:*?\"<>|]";
 
     public boolean isValidName(String folderName) {

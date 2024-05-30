@@ -5,7 +5,6 @@ import coco.ide.ideapp.folders.requestdto.CreateFolderForm;
 import coco.ide.ideapp.folders.requestdto.UpdateFolderNameForm;
 import coco.ide.ideapp.folders.requestdto.UpdateFolderPathForm;
 import coco.ide.ideapp.folders.responsedto.FileListDto;
-import coco.ide.ideapp.folders.responsedto.FolderDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +24,7 @@ public class FolderController {
     @PostMapping
     public String createFolder(@PathVariable Long projectId, @RequestBody CreateFolderForm form) {
         log.info("form = {}", form);
-        boolean isValid = validationService.isValidFolderProjectName(form.getName());
+        boolean isValid = validationService.isValidName(form.getName());
         boolean success = folderService.createFolder(projectId, form);
 
         if (!isValid) {

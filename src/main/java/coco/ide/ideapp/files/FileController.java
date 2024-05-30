@@ -25,7 +25,7 @@ public class FileController {
     public String createFile(@PathVariable Long projectId,
                              @PathVariable Long folderId,
                              @RequestBody CreateFileForm form) {
-        boolean isValid = validationService.isValidFileName(form.getName());
+        boolean isValid = validationService.isValidName(form.getName());
         boolean success = fileService.createFile(projectId, folderId, form);
 
         if (!isValid) {
@@ -78,7 +78,7 @@ public class FileController {
 
         log.info("projectId " + projectId + "folderId " + folderId + "fileId " + fileId);
         Long memberId = fileService.getMemberId(projectId);
-        String language = projectService.getLanguage(projectId);
+        String language = projectService.getProjectById(projectId).getLanguage();
         String filePath;
         if (folderId != null) {
             filePath = "filedb/" + memberId + "/" + projectId + "/" + folderId + "/";

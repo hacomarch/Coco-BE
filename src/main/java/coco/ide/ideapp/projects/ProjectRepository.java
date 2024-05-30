@@ -14,11 +14,10 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     @Query("select p from Project p " +
             "join fetch p.member m " +
             "where m.memberId = :memberId")
-    List<Project> findAllByMemberMemberIdWithMember(@Param("memberId") Long memberId);
+    List<Project> findAllByMemberMemberIdWithMember(Long memberId);
 
-//    @Override
-//    @Query("select p from Project p" +
-//            " join fetch p.files f" +
-//            " where p.projectId = :projectId")
-//    Optional<Project> findById(Long projectId);
+    @Query("select p from Project p" +
+            " join fetch p.files f" +
+            " where p.projectId = :projectId")
+    Optional<Project> findProjectWithFilesById(Long projectId);
 }

@@ -1,7 +1,9 @@
 package coco.ide.ideapp.projects;
 
+import coco.ide.ideapp.exception.InvalidProjectCreationFormException;
 import coco.ide.ideapp.exception.ProjectNotFoundException;
 import coco.ide.ideapp.exception.UserNotFoundException;
+import coco.ide.ideapp.folders.Folder;
 import coco.ide.ideapp.projects.requestdto.CreateProjectForm;
 import coco.ide.ideapp.projects.responsedto.*;
 import coco.ide.member.Member;
@@ -18,7 +20,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -33,9 +35,10 @@ public class ProjectService {
 
     @Transactional
     public ProjectDto createProject(CreateProjectForm form) {
+        validateCreateProjectForm(form);
         Project project = createNewProject(form);
 
-        Member member = getMember(form.getMemberId());
+        Member member = getMemberById(form.getMemberId());
         project.setMember(member);
 
         Project savedProject = projectRepository.save(project);
@@ -45,6 +48,50 @@ public class ProjectService {
         return new ProjectDto(savedProject.getProjectId(), savedProject.getName(), savedProject.getLanguage());
     }
 
+    @Transactional
+    public void deleteProject(Long projectId) throws IllegalArgumentException {
+        Project project = getProjectById(projectId);
+        Long memberId = project.getMember().getMemberId();
+
+        deleteProjectDirectory(memberId, projectId);
+        projectRepository.deleteById(projectId);
+    }
+
+    @Transactional
+    public ProjectDto updateProjectName(Long projectId, String newName) throws IllegalArgumentException {
+        Project project = getProjectById(projectId);
+        project.changeName(newName);
+
+        return new ProjectDto(project.getProjectId(), project.getName(), project.getLanguage());
+    }
+
+    public List<ProjectListDto> findProjectsByMemberId(Long memberId) {
+        return projectRepository.findAllByMemberMemberIdWithMember(memberId)
+                .stream()
+                .map(p -> new ProjectListDto(p.getProjectId(), p.getName()))
+                .toList();
+    }
+
+    public ProjectChildsDto getProjectChildren(Long projectId) {
+        Project project = getProjectWithFilesById(projectId);
+
+        List<FolderInfoDto> folderDtos = mapFoldersToFolderInfoDtos(project.getFolders());
+        List<FileInfoDto> fileDtos = mapFilesToFileInfoDtos(project.getFiles());
+
+        return new ProjectChildsDto(folderDtos, fileDtos);
+    }
+
+    public Project getProjectById(Long projectId) {
+        return projectRepository.findById(projectId)
+                .orElseThrow(ProjectNotFoundException::new);
+    }
+
+    private void validateCreateProjectForm(CreateProjectForm form) {
+        if (form == null || form.getName() == null || form.getLanguage() == null || form.getMemberId() == null) {
+            throw new InvalidProjectCreationFormException();
+        }
+    }
+
     private Project createNewProject(CreateProjectForm form) {
         return Project.builder()
                 .name(form.getName())
@@ -52,7 +99,7 @@ public class ProjectService {
                 .build();
     }
 
-    private Member getMember(Long memberId) {
+    private Member getMemberById(Long memberId) {
         return memberRepository.findById(memberId)
                 .orElseThrow(UserNotFoundException::new);
     }
@@ -66,28 +113,14 @@ public class ProjectService {
         }
     }
 
-    @Transactional
-    public void deleteProject(Long projectId) throws IllegalArgumentException {
-        Project project = getProjectById(projectId);
-        Long memberId = project.getMember().getMemberId();
-
-        deleteProjectDirectory(memberId, projectId);
-        projectRepository.deleteById(projectId);
-    }
-
-    private Project getProjectById(Long projectId) {
-        return projectRepository.findById(projectId)
-                .orElseThrow(ProjectNotFoundException::new);
-    }
-
     private void deleteProjectDirectory(Long memberId, Long projectId) {
         String dirPath = ABSOLUTE_PATH + memberId + "/" + projectId;
         Path directory = Paths.get(dirPath);
 
         try {
-            Files.walk(directory)
-                    .sorted(Comparator.reverseOrder())
-                    .forEach(this::deletePath);
+            Files.walk(directory) // directory 내의 모든 파일과 하위 디렉토리를 순회
+                    .sorted(Comparator.reverseOrder()) //하위 디렉토리와 파일을 먼저 삭제하기 위함
+                    .forEach(this::deletePath); //삭제
 
             File projectDirectory = new File(dirPath);
             projectDirectory.delete();
@@ -104,42 +137,30 @@ public class ProjectService {
         }
     }
 
-    @Transactional
-    public ProjectDto updateProjectName(Long projectId, String newName) throws IllegalArgumentException {
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new RuntimeException("project does not exist"));
-
-        project.changeName(newName);
-        return new ProjectDto(project.getProjectId(), project.getName(), project.getLanguage());
-    }
-
-    public List<ProjectListDto> findAllProjects(Long memberId) {
-        return projectRepository.findAllByMemberMemberIdWithMember(memberId)
-                .stream()
-                .map(p -> new ProjectListDto(p.getProjectId(), p.getName()))
+    private List<FolderInfoDto> mapFoldersToFolderInfoDtos(List<Folder> folders) {
+        return folders.stream()
+                .map(f -> new FolderInfoDto(
+                        f.getFolderId(),
+                        f.getName(),
+                        Optional.ofNullable(f.getParentFolder())
+                                .map(Folder::getFolderId).orElse(null)
+                ))
                 .toList();
     }
 
-    public ProjectChildsDto findChilds(Long projectId) {
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new RuntimeException("project does not exist"));
-
-        List<FolderInfoDto> folderDtos = project.getFolders().stream()
-                .map(f -> new FolderInfoDto(f.getFolderId(), f.getName(),
-                        f.getParentFolder() != null ? f.getParentFolder().getFolderId() : null))
-                .collect(Collectors.toList());
-
-        List<FileInfoDto> fileDtos = project.getFiles().stream()
-                .map(f -> new FileInfoDto(f.getFileId(), f.getName(), f.getFolder() == null ? null : f.getFolder().getFolderId()))
-                .collect(Collectors.toList());
-
-        return new ProjectChildsDto(folderDtos, fileDtos);
+    private List<FileInfoDto> mapFilesToFileInfoDtos(List<coco.ide.ideapp.files.File> files) {
+        return files.stream()
+                .map(f -> new FileInfoDto(
+                        f.getFileId(),
+                        f.getName(),
+                        Optional.ofNullable(f.getFolder())
+                                .map(Folder::getFolderId).orElse(null)
+                ))
+                .toList();
     }
 
-    public String getLanguage(Long projectId) {
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new RuntimeException("project does not exist"));
-
-        return project.getLanguage();
+    private Project getProjectWithFilesById(Long projectId) {
+        return projectRepository.findProjectWithFilesById(projectId)
+                .orElseThrow(ProjectNotFoundException::new);
     }
 }

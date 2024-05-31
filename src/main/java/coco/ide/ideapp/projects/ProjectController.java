@@ -1,7 +1,7 @@
 package coco.ide.ideapp.projects;
 
 import coco.ide.ideapp.ValidationService;
-import coco.ide.ideapp.exception.InvalidProjectCreationFormException;
+import coco.ide.ideapp.exception.InvalidCreationFormException;
 import coco.ide.ideapp.projects.requestdto.CreateProjectForm;
 import coco.ide.ideapp.projects.requestdto.UpdateProjectNameForm;
 import coco.ide.ideapp.projects.responsedto.ProjectChildsDto;
@@ -28,7 +28,7 @@ public class ProjectController {
             ProjectDto project = projectService.createProject(form);
             return ResponseEntity.status(HttpStatus.CREATED).body(project);
         } else {
-            throw new InvalidProjectCreationFormException();
+            throw new InvalidCreationFormException();
         }
     }
 

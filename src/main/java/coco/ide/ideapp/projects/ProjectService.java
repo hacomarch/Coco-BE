@@ -1,6 +1,7 @@
 package coco.ide.ideapp.projects;
 
-import coco.ide.ideapp.exception.InvalidProjectCreationFormException;
+import coco.ide.ideapp.FileDB;
+import coco.ide.ideapp.exception.InvalidCreationFormException;
 import coco.ide.ideapp.exception.ProjectNotFoundException;
 import coco.ide.ideapp.exception.UserNotFoundException;
 import coco.ide.ideapp.folders.Folder;
@@ -22,6 +23,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
+import static coco.ide.ideapp.FileDB.*;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -30,8 +33,6 @@ public class ProjectService {
 
     private final ProjectRepository projectRepository;
     private final MemberRepository memberRepository;
-
-    private static final String ABSOLUTE_PATH = "filedb/";
 
     @Transactional
     public ProjectDto createProject(CreateProjectForm form) {
@@ -88,7 +89,7 @@ public class ProjectService {
 
     private void validateCreateProjectForm(CreateProjectForm form) {
         if (form == null || form.getName() == null || form.getLanguage() == null || form.getMemberId() == null) {
-            throw new InvalidProjectCreationFormException();
+            throw new InvalidCreationFormException();
         }
     }
 

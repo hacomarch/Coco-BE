@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(InvalidProjectCreationFormException.class)
-    public ResponseEntity<String> handleInvalidProjectCreationFormException(InvalidProjectCreationFormException e) {
+    @ExceptionHandler(InvalidCreationFormException.class)
+    public ResponseEntity<String> handleInvalidCreationFormException(InvalidCreationFormException e) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
     }
 
@@ -20,6 +20,21 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<String> handleUserNotFoundException(UserNotFoundException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+    }
+
+    @ExceptionHandler(FolderNotFoundException.class)
+    public ResponseEntity<String> handleFolderNotFoundException(FolderNotFoundException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+    }
+
+    @ExceptionHandler(DuplicateNameException.class)
+    public ResponseEntity<String> handleDuplicateNameException(DuplicateNameException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+    }
+
+    @ExceptionHandler(FolderMoveException.class)
+    public ResponseEntity<String> FolderMoveException(FolderMoveException e) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
     }
 }

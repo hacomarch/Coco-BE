@@ -32,10 +32,10 @@ public class Project {
     @JoinColumn(name = "member_id")
     private Member member;
 
-    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL)
     private List<Folder> folders = new ArrayList<>();
 
-    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL)
     private List<File> files = new ArrayList<>();
 
     @Builder

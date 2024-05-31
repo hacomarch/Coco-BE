@@ -17,7 +17,8 @@ import java.util.List;
 @Getter
 public class Folder {
 
-    @Id @GeneratedValue(strategy = GenerationType.AUTO)
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "folder_id")
     private Long folderId;
 
@@ -54,9 +55,6 @@ public class Folder {
     }
 
     public void changeName(String newName) {
-        if (newName == null || newName.trim().isEmpty()) {
-            throw new IllegalArgumentException("폴더 명은 빈 칸일 수 없습니다.");
-        }
         if (!this.name.equals(newName)) {
             this.name = newName;
         }

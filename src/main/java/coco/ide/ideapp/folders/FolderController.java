@@ -1,12 +1,15 @@
 package coco.ide.ideapp.folders;
 
 import coco.ide.ideapp.ValidationService;
+import coco.ide.ideapp.exception.InvalidCreationFormException;
 import coco.ide.ideapp.folders.requestdto.CreateFolderForm;
 import coco.ide.ideapp.folders.requestdto.UpdateFolderNameForm;
 import coco.ide.ideapp.folders.requestdto.UpdateFolderPathForm;
 import coco.ide.ideapp.folders.responsedto.FileListDto;
+import coco.ide.ideapp.folders.responsedto.FolderDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,47 +25,33 @@ public class FolderController {
     private final ValidationService validationService;
 
     @PostMapping
-    public String createFolder(@PathVariable Long projectId, @RequestBody CreateFolderForm form) {
-        log.info("form = {}", form);
-        boolean isValid = validationService.isValidName(form.getName());
-        boolean success = folderService.createFolder(projectId, form);
-
-        if (!isValid) {
-            return "folder name is not valid";
+    public ResponseEntity<FolderDto> createFolder(@PathVariable Long projectId, @RequestBody CreateFolderForm form) {
+        if (validationService.isValidName(form.getName())) {
+            FolderDto folder = folderService.createFolder(projectId, form);
+            return ResponseEntity.status(HttpStatus.CREATED).body(folder);
+        } else {
+            throw new InvalidCreationFormException();
         }
-
-        if (!success) {
-            return "folder name duplicated";
-        }
-
-        return "create folder ok";
-
     }
 
     @DeleteMapping("/{folderId}")
-    public String deleteFolder(@PathVariable Long projectId, @PathVariable Long folderId) {
+    public ResponseEntity<String> deleteFolder(@PathVariable Long projectId, @PathVariable Long folderId) {
         folderService.deleteFolder(projectId, folderId);
-        return "delete folder ok";
+        return ResponseEntity.ok("delete folder ok");
     }
 
     @PatchMapping("/{folderId}/name")
-    public String updateFolderName(@PathVariable Long folderId,
-                                   @RequestBody UpdateFolderNameForm form) {
-        boolean result = folderService.updateFolderName(folderId, form.getNewName());
-        if (!result) {
-            return "update folder name fail";
-        }
-        return "update folder name ok";
+    public ResponseEntity<FolderDto> updateFolderName(@PathVariable Long folderId,
+                                                      @RequestBody UpdateFolderNameForm form) {
+        FolderDto folderDto = folderService.updateFolderName(folderId, form.getNewName());
+        return ResponseEntity.status(HttpStatus.OK).body(folderDto);
     }
 
     @PatchMapping("/{folderId}/path")
-    public String updateFolderPath(@PathVariable Long projectId, @PathVariable Long folderId,
+    public ResponseEntity<FolderDto> updateFolderPath(@PathVariable Long projectId, @PathVariable Long folderId,
                                    @RequestBody UpdateFolderPathForm form) {
-        boolean result = folderService.updateFolderPath(projectId, folderId, form.getParentId());
-        if (!result) {
-            return "update folder path fail";
-        }
-        return "update folder path ok";
+        FolderDto folderDto = folderService.updateFolderPath(projectId, folderId, form.getParentId());
+        return ResponseEntity.status(HttpStatus.OK).body(folderDto);
     }
 
     @GetMapping("/{folderId}")
@@ -70,5 +59,4 @@ public class FolderController {
         List<FileListDto> files = folderService.findFiles(folderId);
         return ResponseEntity.ok(files);
     }
-
 }

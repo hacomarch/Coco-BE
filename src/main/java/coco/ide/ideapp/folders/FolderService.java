@@ -1,5 +1,10 @@
 package coco.ide.ideapp.folders;
 
+import coco.ide.ideapp.FileDB;
+import coco.ide.ideapp.exception.DuplicateNameException;
+import coco.ide.ideapp.exception.FolderMoveException;
+import coco.ide.ideapp.exception.FolderNotFoundException;
+import coco.ide.ideapp.exception.ProjectNotFoundException;
 import coco.ide.ideapp.folders.requestdto.CreateFolderForm;
 import coco.ide.ideapp.folders.responsedto.FileListDto;
 import coco.ide.ideapp.folders.responsedto.FolderDto;
@@ -18,7 +23,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
+
+import static coco.ide.ideapp.FileDB.ABSOLUTE_PATH;
 
 @Slf4j
 @Service
@@ -30,144 +36,170 @@ public class FolderService {
     private final ProjectRepository projectRepository;
 
     @Transactional
-    public boolean createFolder(Long projectId, CreateFolderForm form) {
+    public FolderDto createFolder(Long projectId, CreateFolderForm form) {
+        isDuplicateName(form.getName(), form.getParentId(), projectId);
 
-        if(isDuplicateName(form.getName(), form.getParentId(), projectId)) {
-            return false;
-        }
+        Folder folder = buildFolder(form);
+        setProjectForFolder(folder, projectId);
 
-        Folder folder = Folder.builder()
+        Folder savedFolder = folderRepository.save(folder);
+        createFolderDirectory(savedFolder, projectId, form.getParentId());
+
+        return new FolderDto(savedFolder.getFolderId(), savedFolder.getName());
+    }
+
+    private Folder buildFolder(CreateFolderForm form) {
+        Folder parentFolder = form.getParentId() == 0 ? null : getFolderById(form.getParentId());
+        return Folder.builder()
                 .name(form.getName())
-                .parentFolder(form.getParentId() == 0 ? null : folderRepository.findById(form.getParentId()).get())
+                .parentFolder(parentFolder)
                 .childFolders(new ArrayList<>())
                 .files(new ArrayList<>())
                 .build();
+    }
 
-        folder.setProject(projectRepository.findById(projectId).get());
+    private void setProjectForFolder(Folder folder, Long projectId) {
+        Project project = getProjectById(projectId);
+        folder.setProject(project);
+    }
 
-        Folder savedFolder = folderRepository.save(folder);
+    private void createFolderDirectory(Folder folder, Long projectId, Long parentId) {
+        Project project = folder.getProject();
+        Long memberId = project.getMember().getMemberId();
+        String dirPath = buildDirectoryPath(memberId, projectId, folder.getFolderId(), parentId);
 
-        Project findProject = projectRepository.findById(projectId).get();
-        Long memberId = findProject.getMember().getMemberId();
-
-        String basicPath = "filedb/" + memberId + "/" + projectId + "/";
-
-        String dirPath = form.getParentId() == 0 ? basicPath + savedFolder.getFolderId() : basicPath + form.getParentId() + "/" + savedFolder.getFolderId();
         File directory = new File(dirPath);
         if (!directory.exists()) {
             directory.mkdirs();
         }
-        return true;
+    }
+
+    private String buildDirectoryPath(Long memberId, Long projectId, Long folderId, Long parentId) {
+        String basicPath = ABSOLUTE_PATH + memberId + "/" + projectId + "/";
+        return parentId == 0 ? basicPath + folderId : basicPath + parentId + "/" + folderId;
     }
 
     @Transactional
-    public void deleteFolder(Long projectId, Long folderId) throws IllegalArgumentException{
-        if (!folderRepository.existsById(folderId)) {
-            throw new IllegalArgumentException("폴더 ID" + folderId + "는 존재하지 않습니다.");
-        }
+    public void deleteFolder(Long projectId, Long folderId) {
+        Folder folder = getFolderWithProjectAndParentFolderAndChildrenById(folderId);
+        Long memberId = folder.getProject().getMember().getMemberId();
+        long parentId = folder.getParentFolder() == null ? 0 : folder.getParentFolder().getFolderId();
 
-        Project findProject = projectRepository.findById(projectId).get();
-        Long memberId = findProject.getMember().getMemberId();
-
-        String dirPath = "filedb/" + memberId + "/" + projectId + "/" + folderId;
-        Path directory = Paths.get(dirPath);
-        try {
-            Files.walk(directory)
-                    .sorted(Comparator.reverseOrder())
-                    .forEach(path -> {
-                        try {
-                            Files.delete(path);
-                        } catch (IOException e) {
-                            System.err.println(e.getMessage());
-                        }
-                    });
-        } catch (IOException e) {
-            System.err.println(e.getMessage());
-        }
+        String dirPath = buildDirectoryPath(memberId, projectId, folderId, parentId);
+        deleteDirectory(Paths.get(dirPath));
 
         folderRepository.deleteById(folderId);
     }
 
-    @Transactional
-    public boolean updateFolderName(Long folderId, String newName) {
-        Folder folder = folderRepository.findById(folderId)
-                .orElseThrow(() -> new RuntimeException("Folder does not exist"));
+    private Folder getFolderWithProjectAndParentFolderAndChildrenById(Long folderId) {
+        return folderRepository.findFolderWithProjectAndParentFolderAndChildrenById(folderId)
+                .orElseThrow(FolderNotFoundException::new);
+    }
 
-        if (isDuplicateName(newName, folder.getParentFolder() != null ? folder.getParentFolder().getFolderId() : null, folder.getProject().getProjectId())) {
-            return false;
+    private void deleteDirectory(Path directory) {
+        try {
+            Files.walk(directory)
+                    .sorted(Comparator.reverseOrder())
+                    .forEach(this::deletePath);
+        } catch (IOException e) {
+            log.error("Error walking through directory {}: {}", directory, e.getMessage());
         }
+    }
+
+    private void deletePath(Path path) {
+        try {
+            Files.delete(path);
+        } catch (IOException e) {
+            log.error("Error deleting file {}: {}", path, e.getMessage());
+        }
+    }
+
+    @Transactional
+    public FolderDto updateFolderName(Long folderId, String newName) {
+        Folder folder = getFolderById(folderId);
+        Long parentId = folder.getParentFolder() != null ? folder.getParentFolder().getFolderId() : null;
+
+        isDuplicateName(newName, parentId, folder.getProject().getProjectId());
+
         folder.changeName(newName);
-        return true;
+        return new FolderDto(folderId, folder.getName());
     }
 
     @Transactional
-    public boolean updateFolderPath(Long projectId, Long folderId, Long parentId) {
-        Folder folder = folderRepository.findById(folderId)
-                .orElseThrow(() -> new RuntimeException("Folder does not exist"));
-        Folder parentFolder = parentId == 0 ? null : folderRepository.findById(parentId).get();
+    public FolderDto updateFolderPath(Long projectId, Long folderId, Long newParentId) {
+        Folder folder = getFolderById(folderId);
 
-        if (isDuplicateName(folder.getName(), parentId, folder.getProject().getProjectId())) {
-            return false;
-        }
+        isDuplicateName(folder.getName(), newParentId, projectId);
 
-        Project findProject = projectRepository.findById(projectId).get();
-        Long memberId = findProject.getMember().getMemberId();
+        Long memberId = folder.getProject().getMember().getMemberId();
+        Long oldParentId = folder.getParentFolder() == null ? 0 : folder.getParentFolder().getFolderId();
+        String oldPath = buildFolderPath(memberId, projectId, oldParentId);
+        String newPath = buildFolderPath(memberId, projectId, newParentId);
 
-        String basicPath = "filedb/" + memberId + "/" + projectId + "/";
-        String oldPath = folder.getParentFolder() == null ? basicPath : basicPath + folder.getParentFolder().getFolderId() + "/";
+        moveFolder(oldPath, newPath, folderId);
 
-        folder.changeParentFolder(parentFolder);
-
-        String newPath = parentId == 0 ? basicPath : basicPath + parentId + "/";
-
-        // 원래 파일 위치
-        java.io.File oldFile = new java.io.File(oldPath + folder.getFolderId());
-
-        // 새 파일 위치
-        java.io.File newFile = new java.io.File(newPath + folderId);
-        log.info("oldPath = {}", oldPath);
-        log.info(newFile.getPath());
-
-        // 파일 이동
-        if (oldFile.renameTo(newFile)) {
-            System.out.println("File moved successfully");
-        } else {
-            System.out.println("Failed to move file");
-        }
-
-        return true;
+        Folder newParentFolder = newParentId == 0 ? null : getFolderById(newParentId);
+        folder.changeParentFolder(newParentFolder);
+        return new FolderDto(folderId, folder.getName());
     }
 
+    private String buildFolderPath(Long memberId, Long projectId, Long parentId) {
+        String basicPath = ABSOLUTE_PATH + memberId + "/" + projectId + "/";
+        return parentId == 0 ? basicPath : basicPath + parentId + "/";
+    }
+
+    private void moveFolder(String oldPath, String newPath, Long folderId) {
+        File oldFile = new File(oldPath + folderId);
+        File newFile = new File(newPath + folderId);
+
+        if (!oldFile.renameTo(newFile)) {
+            throw new FolderMoveException();
+        }
+    }
 
     public List<FileListDto> findFiles(Long folderId) {
-        Folder folder = folderRepository.findById(folderId)
-                .orElseThrow(() -> new RuntimeException("project does not exist"));
-
-        return folder.getFiles()
+        return getFolderById(folderId)
+                .getFiles()
                 .stream()
                 .map(f -> new FileListDto(f.getFileId(), f.getName()))
                 .toList();
     }
 
-    private boolean isDuplicateName(String newName, Long parentId, Long projectId) {
-        List<Folder> siblings;
-        if (parentId == null || parentId == 0) {
-            // 최상위 폴더의 경우, 프로젝트 내의 다른 최상위 폴더들과 비교
-            Project project = projectRepository.findById(projectId)
-                    .orElseThrow(() -> new RuntimeException("Project does not exist"));
-            siblings = project.getFolders().stream()
-                    .filter(f -> f.getParentFolder() == null)
-                    .collect(Collectors.toList());
-        } else {
-            // 하위 폴더의 경우, 부모 폴더의 자식 폴더들과 비교
-            Folder parentFolder = folderRepository.findById(parentId)
-                    .orElseThrow(() -> new RuntimeException("Parent folder does not exist"));
-            siblings = parentFolder.getChildFolders();
+    private void isDuplicateName(String newName, Long parentId, Long projectId) {
+        if (getSiblings(parentId, projectId)
+                .stream()
+                .anyMatch(f -> f.getName().equals(newName))) {
+            throw new DuplicateNameException();
         }
-
-        return siblings.stream()
-                .anyMatch(f -> f.getName().equals(newName));
     }
 
+    private List<Folder> getSiblings(Long parentId, Long projectId) {
+        if (parentId == null || parentId == 0) {
+            return getTopLevelSiblings(projectId);
+        } else {
+            return getChildSiblings(parentId);
+        }
+    }
 
+    private List<Folder> getTopLevelSiblings(Long projectId) {
+        return getProjectById(projectId)
+                .getFolders()
+                .stream()
+                .filter(f -> f.getParentFolder() == null)
+                .toList();
+    }
+
+    private List<Folder> getChildSiblings(Long parentId) {
+        return getFolderById(parentId).getChildFolders();
+    }
+
+    private Project getProjectById(Long projectId) {
+        return projectRepository.findById(projectId)
+                .orElseThrow(ProjectNotFoundException::new);
+    }
+
+    private Folder getFolderById(Long folderId) {
+        return folderRepository.findById(folderId)
+                .orElseThrow(FolderNotFoundException::new);
+    }
 }

@@ -1,6 +1,5 @@
 package coco.ide.ideapp.folders;
 
-import coco.ide.ideapp.FileDB;
 import coco.ide.ideapp.exception.DuplicateNameException;
 import coco.ide.ideapp.exception.FolderMoveException;
 import coco.ide.ideapp.exception.FolderNotFoundException;

@@ -1,19 +1,20 @@
 package coco.ide.ideapp.files;
 
 import coco.ide.ideapp.ValidationService;
+import coco.ide.ideapp.exception.InvalidCreationFormException;
 import coco.ide.ideapp.files.requestdto.*;
+import coco.ide.ideapp.files.responsedto.FileDto;
 import coco.ide.ideapp.projects.ProjectService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 
-@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/projects/{projectId}/folders/{folderId}/files")
-
 public class FileController {
 
     private final FileService fileService;
@@ -22,77 +23,61 @@ public class FileController {
     private final ProjectService projectService;
 
     @PostMapping
-    public String createFile(@PathVariable Long projectId,
-                             @PathVariable Long folderId,
-                             @RequestBody CreateFileForm form) {
-        boolean isValid = validationService.isValidName(form.getName());
-        boolean success = fileService.createFile(projectId, folderId, form);
-
-        if (!isValid) {
-            return "file name is not valid";
+    public ResponseEntity<FileDto> createFile(@PathVariable Long projectId,
+                                              @PathVariable Long folderId,
+                                              @RequestBody CreateFileForm form) {
+        if (validationService.isValidName(form.getName())) {
+            FileDto file = fileService.createFile(projectId, folderId, form);
+            return ResponseEntity.status(HttpStatus.CREATED).body(file);
+        } else {
+            throw new InvalidCreationFormException();
         }
-
-        if (!success) {
-            return "file name duplicated";
-        }
-
-        return "create file ok";
-
     }
 
     @DeleteMapping("/{fileId}")
-    public String deleteFile(@PathVariable Long projectId, @PathVariable Long folderId, @PathVariable Long fileId) {
+    public ResponseEntity<String> deleteFile(@PathVariable Long projectId,
+                                             @PathVariable Long folderId,
+                                             @PathVariable Long fileId) {
         fileService.deleteFile(projectId, folderId, fileId);
-        return "delete file ok";
+        return ResponseEntity.ok("delete file ok");
     }
 
     @PatchMapping("/{fileId}/name")
-    public String updateFileName(@PathVariable Long fileId, @RequestBody UpdateFileNameForm form) {
-        boolean isUpdateFileName = fileService.updateFileName(fileId, form.getNewName());
-        if (!isUpdateFileName) {
-            return "update file name fail";
+    public ResponseEntity<FileDto> updateFileName(@PathVariable Long fileId, @RequestBody UpdateFileNameForm form) {
+        if (validationService.isValidName(form.getNewName())) {
+            FileDto fileDto = fileService.updateFileName(fileId, form.getNewName());
+            return ResponseEntity.status(HttpStatus.OK).body(fileDto);
+        } else {
+            throw new InvalidCreationFormException();
         }
-        return "update file name ok";
     }
 
     @PatchMapping("/{fileId}/path")
-    public String updateFilePath(@PathVariable Long projectId, @PathVariable Long fileId, @RequestBody UpdateFilePathForm form) {
-        boolean isUpdateFilePath = fileService.updateFilePath(projectId, form.getFolderId(), fileId);
-        if (!isUpdateFilePath) {
-            return "update file path fail";
-        }
-        return "update file path ok";
+    public ResponseEntity<FileDto> updateFilePath(@PathVariable Long projectId,
+                                                  @PathVariable Long fileId,
+                                                  @RequestBody UpdateFilePathForm form) {
+        FileDto fileDto = fileService.updateFilePath(projectId, form.getFolderId(), fileId);
+        return ResponseEntity.status(HttpStatus.OK).body(fileDto);
     }
 
     @PatchMapping("/{fileId}/content")
-    public String updateFileContent(@PathVariable Long fileId, @RequestBody UpdateFileContentForm form) {
-        log.info("file content = {}", form.getCode());
+    public ResponseEntity<String> updateFileContent(@PathVariable Long fileId, @RequestBody UpdateFileContentForm form) {
         fileService.updateFileContent(fileId, form.getCode());
-        return "수정 성공";
+        return ResponseEntity.ok("update file content ok");
+    }
+
+    @GetMapping("/{fileId}")
+    public ResponseEntity<String> getFileContent(@PathVariable Long fileId) {
+        return ResponseEntity.ok(fileService.getFileContent(fileId));
     }
 
     @GetMapping("/{fileId}/run")
     public String runCommand(@PathVariable Long projectId,
-                           @PathVariable Long folderId,
-                           @PathVariable Long fileId) throws IOException {
-
-        log.info("projectId " + projectId + "folderId " + folderId + "fileId " + fileId);
-        Long memberId = fileService.getMemberId(projectId);
+                             @PathVariable Long folderId,
+                             @PathVariable Long fileId) throws IOException {
         String language = projectService.getProjectById(projectId).getLanguage();
-        String filePath;
-        if (folderId != null) {
-            filePath = "filedb/" + memberId + "/" + projectId + "/" + folderId + "/";
-        } else {
-            filePath = "filedb/" + memberId + "/" + projectId + "/";
-        }
-
-        log.info("memberId = " + memberId + "language = " + language);
-        log.info("filePath = " + filePath);
-        return executeService.executeCode(filePath, language, fileId);
-    }
-
-    @GetMapping("/{fileId}")
-    public String getFileContent(@PathVariable Long fileId) {
-        return fileService.getFileContent(fileId);
+        String filePath = fileService.buildPath(projectId, folderId == null ? 0 : folderId);
+        String fileName = fileService.getFileById(fileId).getName();
+        return executeService.executeCode(filePath, language, fileName);
     }
 }

@@ -11,7 +11,6 @@ import lombok.NoArgsConstructor;
 @Entity
 @NoArgsConstructor
 @Getter
-//Todo : 여기도 프로젝트 필드 추가해야 할 듯. 했으니 확인 필요
 public class File {
 
     @Id
@@ -48,14 +47,14 @@ public class File {
         this.name = name;
     }
 
+    public void changePath(String path) {
+        this.path = path;
+    }
+
     public void setFolder(Folder folder) {
         this.folder = folder;
         if (folder != null && !folder.getFiles().contains(this)) {
             folder.getFiles().add(this);
         }
-    }
-
-    public void setPath(String path) {
-        this.path = path;
     }
 }
